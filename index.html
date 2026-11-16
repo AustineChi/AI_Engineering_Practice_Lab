@@ -19,7 +19,7 @@ h1{font-size:clamp(27px,5vw,39px);line-height:1.1;margin:7px 0 9px;letter-spacin
 .question{font-size:clamp(19px,3vw,24px);font-weight:680;line-height:1.35;margin:0 0 20px}.answers{display:grid;gap:10px}.answer{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;background:var(--answer-bg);border:1px solid var(--line);border-radius:13px;color:var(--ink);padding:13px 14px;font:inherit;cursor:pointer;transition:.15s}.answer:hover:not(:disabled){border-color:var(--accent);background:var(--answer-hover);transform:translateY(-1px)}.answer:disabled{cursor:default;opacity:1}.letter{flex:0 0 27px;height:27px;border:1px solid #71809c;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800}.answer.correct{border-color:#438c6c;background:color-mix(in srgb,var(--good) 16%,var(--answer-bg))}.answer.wrong{border-color:#9a5353;background:color-mix(in srgb,var(--bad) 13%,var(--answer-bg))}
 .feedback{display:none;margin-top:18px;border-radius:13px;padding:15px;background:var(--feedback-bg);border:1px solid var(--line)}.feedback.show{display:block}.verdict{font-weight:800;margin-bottom:6px}.verdict.good{color:var(--good)}.verdict.bad{color:var(--bad)}.explain{font-size:14px}.takeaway{font-size:13px;color:var(--muted);margin-top:9px}
 .controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px}.hintbox{background:var(--answer-bg);border:1px dashed var(--line);border-radius:12px;padding:11px 13px;margin:12px 0;color:var(--muted);font-size:13px}.confidence{margin-top:13px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}.confidence button{border:1px solid var(--line);background:var(--answer-bg);color:var(--ink);border-radius:9px;padding:6px 10px;font-size:12px;cursor:pointer}.confidence button.selected{border-color:var(--accent);outline:1px solid var(--accent)}
-.finish{text-align:center}.finish h2{font-size:34px;margin:6px}.finish p{color:var(--muted)}.hidden{display:none!important}.divider{height:1px;background:var(--line);margin:18px 0}
+.finish{text-align:center}.finish h2{font-size:34px;margin:6px}.finish p{color:var(--muted)}.hidden{display:none!important}.answer.sel{border-color:var(--accent);background:var(--answer-hover)}textarea,input[type=number]{width:100%;font:inherit;background:var(--answer-bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}.commit{margin-top:6px}.divider{height:1px;background:var(--line);margin:18px 0}
 .bookmark{background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:7px 10px;cursor:pointer;font-size:12px}.bookmark.active{color:#e6b85c;border-color:#b28a3c}
 footer{color:var(--muted);font-size:11px;text-align:center;margin:17px 0}
 @media(max-width:560px){body{padding:18px 10px}.top{align-items:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{align-items:flex-end}.stats{max-width:100px}}
@@ -27,14 +27,14 @@ footer{color:var(--muted);font-size:11px;text-align:center;margin:17px 0}
 </head>
 <body><main>
 <div class="top"><div><div class="brand">AI Engineering · Practice Lab</div></div><div class="top-actions"><button class="theme-toggle" id="themeToggle">☀ Light mode</button><div class="stats" id="score">Ready to learn</div></div></div>
-<h1>Build engineering instincts.</h1><p class="sub">303 questions · learn, practise, review and track your progress.</p>
+<h1>Build engineering instincts.</h1><p class="sub">Recall-first questions · learn, practise, review and track your progress.</p>
 <section class="card" id="app"><p class="muted">Loading question bank…</p></section>
 <footer>Progress and bookmarks are saved in this browser. Works offline when launched locally with the included script.</footer>
 </main>
 <script>
 const app=document.getElementById('app'),scoreEl=document.getElementById('score'),root=document.documentElement;
 const letters=['A','B','C','D'];
-let bank=[],deck=[],position=0,score=0,answered=false,mode='learn',sessionKind='all',currentQ=null;
+let points=0,bank=[],deck=[],position=0,score=0,answered=false,mode='learn',sessionKind='all',currentQ=null;
 let progress={},bookmarks=[],confidenceChoice=null,sessionResults=[];
 const STORE='ai-practice-progress-v2',BOOK='ai-practice-bookmarks-v2';
 function readStore(k,fallback){try{return JSON.parse(localStorage.getItem(k))??fallback}catch(e){return fallback}}
@@ -46,16 +46,18 @@ document.getElementById('themeToggle').onclick=()=>{let t=root.dataset.theme==='
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function topics(){return [...new Set(bank.map(q=>q.section))].sort((a,b)=>a.localeCompare(b));}
 function stats(){let vals=Object.values(progress),attempts=vals.reduce((n,x)=>n+(x.attempts||0),0),correct=vals.reduce((n,x)=>n+(x.correctCount||0),0),mastered=vals.filter(x=>x.attempts>=2&&x.correctCount/x.attempts>=.8).length,wrong=vals.filter(x=>x.lastCorrect===false).length;return{attempts,correct,mastered,wrong,accuracy:attempts?Math.round(correct/attempts*100):0};}
+function dueList(){let n=Date.now();return bank.filter(q=>{let p=progress[q.id];return p&&p.attempts&&(p.due??0)<=n;});}
 function dashboard(){
  const s=stats(),byTopic=topics().map(t=>{let qs=bank.filter(q=>q.section===t),done=qs.filter(q=>progress[q.id]?.attempts),right=qs.reduce((n,q)=>n+(progress[q.id]?.correctCount||0),0),att=qs.reduce((n,q)=>n+(progress[q.id]?.attempts||0),0);return{t,done:done.length,total:qs.length,acc:att?Math.round(right/att*100):0};});
  app.innerHTML=`<div class="brand">Your learning dashboard</div><h2 style="margin:7px 0 5px">Pick up where you left off.</h2><p class="muted" style="margin-top:0">Choose a mode and topic, or review the areas that need work.</p>
  <div class="grid"><div class="statbox"><strong>${s.attempts}</strong><span>Answers recorded</span></div><div class="statbox"><strong>${s.accuracy}%</strong><span>Overall accuracy</span></div><div class="statbox"><strong>${s.mastered}</strong><span>Questions showing mastery</span></div><div class="statbox"><strong>${bookmarks.length}</strong><span>Bookmarked questions</span></div></div>
  <div class="field"><label for="mode">Practice mode</label><select id="mode"><option value="learn">Learning mode — hints and immediate explanations</option><option value="exam">Exam mode — no hints or feedback until the end</option></select></div>
  <div class="field"><label for="topic">Topic</label><select id="topic"><option value="all">All topics (${bank.length} questions)</option>${topics().map(t=>`<option value="${esc(t)}">${esc(t)} (${bank.filter(q=>q.section===t).length})</option>`).join('')}</select></div>
- <div class="toolbar"><button class="primary" id="startAll">Start practice →</button><button class="secondary" id="reviewWrong">Review mistakes (${s.wrong})</button><button class="secondary" id="reviewBookmarks">Bookmarks (${bookmarks.length})</button><button class="secondary" id="dashboardBtn">Refresh dashboard</button></div>
+ <div class="toolbar"><button class="primary" id="startAll">Start practice →</button><button class="secondary" id="reviewDue">Due for review (${dueList().length})</button><button class="secondary" id="reviewWrong">Review mistakes (${s.wrong})</button><button class="secondary" id="reviewBookmarks">Bookmarks (${bookmarks.length})</button><button class="secondary" id="dashboardBtn">Refresh dashboard</button></div>
  <div class="divider"></div><h3 class="section-title">Topic progress</h3>${byTopic.map(x=>`<div class="topicrow"><span>${esc(x.t)} <span class="muted">· ${x.done}/${x.total} attempted</span></span><strong>${x.acc}%</strong></div>`).join('')}
  <div class="toolbar"><button class="danger" id="reset">Reset all progress and start from scratch</button></div><p class="small">Reset clears saved answers, confidence ratings and bookmarks. Your light/dark theme preference is kept.</p>`;
  document.getElementById('startAll').onclick=()=>{mode=document.getElementById('mode').value;let t=document.getElementById('topic').value;startRound(bank.filter(q=>t==='all'||q.section===t),'all');};
+ document.getElementById('reviewDue').onclick=()=>{let a=dueList();if(a.length)startRound(a,'mistakes');else alert('Nothing due. Answer some questions first; missed ones return after 1, 3, 7 and 14 days as you get them right.');};
  document.getElementById('reviewWrong').onclick=()=>{let a=bank.filter(q=>progress[q.id]?.lastCorrect===false);if(a.length)startRound(a,'mistakes');else alert('No mistakes to review yet. Complete a few questions first.');};
  document.getElementById('reviewBookmarks').onclick=()=>{let a=bank.filter(q=>bookmarks.includes(q.id));if(a.length)startRound(a,'bookmarks');else alert('No bookmarks yet. Bookmark questions while practising.');};
  document.getElementById('dashboardBtn').onclick=dashboard;
@@ -63,48 +65,88 @@ function dashboard(){
 }
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startRound(items,kind){
- if(!items.length)return;sessionKind=kind;deck=shuffle(items);position=0;score=0;answered=false;sessionResults=[];render();
+ if(!items.length)return;sessionKind=kind;deck=shuffle(items);position=0;score=0;points=0;answered=false;sessionResults=[];render();
 }
 function render(){
- answered=false;confidenceChoice=null;let base=deck[position];let order=shuffle(base.options.map((_,i)=>i));currentQ=Object.assign({},base,{options:order.map(i=>base.options[i]),answer:order.indexOf(base.answer),origId:base.id});let q=currentQ,progressPct=position/deck.length*100;
- let bookmarked=bookmarks.includes(q.id);
+ answered=false;confidenceChoice=null;
+ let base=deck[position],fmt=base.format||'single',order=base.options?shuffle(base.options.map((_,i)=>i)):[];
+ currentQ=Object.assign({},base,{format:fmt});
+ if(base.options){currentQ.options=order.map(i=>base.options[i]);if(fmt==='multi')currentQ.answers=base.answers.map(a=>order.indexOf(a));else currentQ.answer=order.indexOf(base.answer);}
+ let q=currentQ,progressPct=position/deck.length*100,bookmarked=bookmarks.includes(q.id);
+ let kind=q.type==='scenario'?'Scenario practice':q.type==='applied'?'Applied question':q.type==='concept'?'Concept check':q.type==='hard'?'Hard mode':'Core question';
+ let fmtLabel=fmt==='multi'?' · select all that apply':fmt==='numeric'?' · numeric answer':'';
  app.innerHTML=`<div class="meta"><span class="pill">${esc(q.section)}</span><span>${position+1} / ${deck.length} · ${mode==='learn'?'Learning mode':'Exam mode'}</span></div>
- <div class="progress"><span style="width:${progressPct}%"></span></div><div class="meta"><span>${q.type==='scenario'?'Scenario practice':q.type==='applied'?'Applied question':q.type==='concept'?'Concept check':'Core question'}${q.source?' · '+esc(q.source):''}</span><button class="bookmark ${bookmarked?'active':''}" id="bookmark">${bookmarked?'★ Bookmarked':'☆ Bookmark'}</button></div>
+ <div class="progress"><span style="width:${progressPct}%"></span></div><div class="meta"><span>${kind}${fmtLabel}${q.source?' · '+esc(q.source):''}</span><button class="bookmark ${bookmarked?'active':''}" id="bookmark">${bookmarked?'★ Bookmarked':'☆ Bookmark'}</button></div>
  <p class="question">${esc(q.question)}</p>
  ${mode==='learn'?`<button class="secondary" id="hintBtn">Show hint</button><div class="hintbox hidden" id="hint">${esc(q.hint||(q.concept_term?'Think about the concept of "'+q.concept_term+'" and eliminate options that do not address the root cause.':'Think about the underlying principle and eliminate options that do not address the root cause.'))}</div>`:''}
- <div class="answers">${q.options.map((o,i)=>`<button class="answer" data-index="${i}"><span class="letter">${letters[i]}</span><span>${esc(o)}</span></button>`).join('')}</div>
- <div class="feedback" id="feedback" aria-live="polite"></div><div id="confidenceArea"></div>
+ <div class="commit" id="commit">
+  <div class="confidence"><span>1. How sure are you?</span>${['Low','Medium','High'].map(v=>`<button data-confidence="${v}">${v}</button>`).join('')}</div>
+  ${fmt==='numeric'?`<div class="field"><label for="num">2. Your number${q.unit?' ('+esc(q.unit)+')':''}</label><input id="num" type="number" step="any" inputmode="decimal"></div>`:`<div class="field"><label for="recall">2. Write your answer in your own words <em>before</em> seeing the options</label><textarea id="recall" rows="2" placeholder="A few words is enough"></textarea></div>`}
+  <p class="small hidden" id="commitErr" style="color:var(--bad)"></p>
+  <div class="toolbar"><button class="primary" id="go">${fmt==='numeric'?'Submit answer':'Show options'}</button><button class="secondary" id="idk">I don't know</button></div>
+  <p class="small">Honest "I don't know" costs nothing. A confident wrong answer costs points.</p>
+ </div>
+ <div class="answers" id="options"></div><div id="multiBar"></div>
+ <div class="feedback" id="feedback" aria-live="polite"></div>
  <div class="controls"><button class="secondary" id="home">Dashboard</button><button class="next" id="next" disabled>${position===deck.length-1?'Finish round':'Next question →'}</button></div>`;
- app.querySelectorAll('.answer').forEach(b=>b.onclick=()=>choose(Number(b.dataset.index)));
  document.getElementById('next').onclick=advance;document.getElementById('home').onclick=dashboard;
  document.getElementById('bookmark').onclick=()=>{if(bookmarks.includes(q.id))bookmarks=bookmarks.filter(x=>x!==q.id);else bookmarks.push(q.id);save();let b=document.getElementById('bookmark');b.classList.toggle('active',bookmarks.includes(q.id));b.textContent=bookmarks.includes(q.id)?'★ Bookmarked':'☆ Bookmark';};
  if(mode==='learn')document.getElementById('hintBtn').onclick=()=>document.getElementById('hint').classList.toggle('hidden');
- scoreEl.textContent=`Round ${score} / ${position}`;
+ document.querySelectorAll('[data-confidence]').forEach(b=>b.onclick=()=>{confidenceChoice=b.dataset.confidence;document.querySelectorAll('[data-confidence]').forEach(x=>x.classList.toggle('selected',x===b));});
+ document.getElementById('idk').onclick=()=>{if(!confidenceChoice)confidenceChoice='Low';grade('unknown');};
+ document.getElementById('go').onclick=()=>{
+  let err=document.getElementById('commitErr'),msg='';
+  if(!confidenceChoice)msg='Pick how sure you are first.';
+  else if(fmt==='numeric'&&document.getElementById('num').value.trim()==='')msg='Enter a number, or press "I don\'t know".';
+  else if(fmt!=='numeric'&&document.getElementById('recall').value.trim().length<3)msg='Write a few words first, or press "I don\'t know".';
+  if(msg){err.textContent=msg;err.classList.remove('hidden');return;}
+  if(fmt==='numeric'){let v=parseFloat(document.getElementById('num').value),t=q.numeric.tolerance??.05;grade(Math.abs(v-q.numeric.value)<=Math.abs(q.numeric.value)*t?'correct':'wrong');}
+  else showOptions();
+ };
+ scoreEl.textContent=`Round ${score} / ${position} · ${points} pts`;
 }
-function choose(index){
- if(answered)return;answered=true;let q=currentQ,correct=index===q.answer;if(correct)score++;
- let old=progress[q.id]||{attempts:0,correctCount:0};old.attempts++;if(correct)old.correctCount++;old.lastCorrect=correct;old.lastAnswer=index;old.lastSeen=new Date().toISOString();progress[q.id]=old;sessionResults.push({q,index,correct});save();
- app.querySelectorAll('.answer').forEach((b,i)=>{b.disabled=true;if(i===q.answer)b.classList.add('correct');else if(i===index)b.classList.add('wrong');});
- if(mode==='learn')showFeedback(q,index,correct);
- else document.getElementById('confidenceArea').innerHTML='<p class="small">Answer recorded. Explanations will appear when the round ends.</p>';
- document.getElementById('next').disabled=false;scoreEl.textContent=`Round ${score} / ${position+1}`;
- document.getElementById('confidenceArea').innerHTML+=`<div class="confidence"><span>How confident were you?</span>${['Low','Medium','High'].map(v=>`<button data-confidence="${v}">${v}</button>`).join('')}</div>`;
- document.querySelectorAll('[data-confidence]').forEach(b=>b.onclick=()=>{confidenceChoice=b.dataset.confidence;old.confidence=confidenceChoice;progress[q.id]=old;save();document.querySelectorAll('[data-confidence]').forEach(x=>x.classList.toggle('selected',x===b));});
+function showOptions(){
+ let q=currentQ,fmt=q.format,box=document.getElementById('options'),picked=new Set();
+ document.getElementById('commit').classList.add('hidden');
+ box.innerHTML=q.options.map((o,i)=>`<button class="answer" data-index="${i}"><span class="letter">${letters[i]}</span><span>${esc(o)}</span></button>`).join('');
+ if(fmt==='multi'){
+  document.getElementById('multiBar').innerHTML='<div class="toolbar"><button class="primary" id="submitMulti" disabled>Submit selection</button></div>';
+  box.querySelectorAll('.answer').forEach(b=>b.onclick=()=>{let i=Number(b.dataset.index);if(picked.has(i))picked.delete(i);else picked.add(i);b.classList.toggle('sel',picked.has(i));document.getElementById('submitMulti').disabled=!picked.size;});
+  document.getElementById('submitMulti').onclick=()=>{let a=[...q.answers].sort().join(),p=[...picked].sort().join();grade(a===p?'correct':'wrong',[...picked]);};
+ }else box.querySelectorAll('.answer').forEach(b=>b.onclick=()=>{let i=Number(b.dataset.index);grade(i===q.answer?'correct':'wrong',[i]);});
 }
-function showFeedback(q,index,correct){
+function ansText(q){return q.format==='numeric'?q.numeric.value+(q.unit?' '+q.unit:''):q.format==='multi'?q.answers.slice().sort().map(i=>letters[i]+'. '+q.options[i]).join(' · '):letters[q.answer]+'. '+q.options[q.answer];}
+function grade(result,picked){
+ if(answered)return;answered=true;let q=currentQ,c=confidenceChoice||'Low',correct=result==='correct';
+ let pts=correct?{Low:1,Medium:2,High:3}[c]:result==='wrong'?{Low:0,Medium:-1,High:-3}[c]:0;
+ if(correct)score++;points+=pts;
+ let old=progress[q.id]||{attempts:0,correctCount:0};old.attempts++;if(correct)old.correctCount++;if(result==='unknown')old.unknown=(old.unknown||0)+1;old.lastCorrect=correct;old.lastResult=result;old.box=correct?Math.min((old.box||0)+1,4):0;old.due=Date.now()+[0,1,3,7,14][old.box]*864e5;old.confidence=c;old.lastSeen=new Date().toISOString();progress[q.id]=old;
+ sessionResults.push({q,correct,result});save();
+ document.getElementById('commit').classList.add('hidden');
+ if(q.format!=='numeric'){
+  if(!document.querySelector('#options .answer'))showOptions();
+  let ans=q.format==='multi'?q.answers:[q.answer];
+  document.querySelectorAll('#options .answer').forEach((b,i)=>{b.disabled=true;if(ans.includes(i))b.classList.add('correct');else if((picked||[]).includes(i))b.classList.add('wrong');});
+  let mb=document.getElementById('multiBar');if(mb)mb.innerHTML='';
+ }
+ let tag=result==='unknown'?'◌ You marked this as unknown. That is useful: it shows a gap, and it costs nothing.':correct?'✓ Correct':'✕ Not quite';
  let fb=document.getElementById('feedback');fb.classList.add('show');
- fb.innerHTML=`<div class="verdict ${correct?'good':'bad'}">${correct?'✓ Correct':'✕ Not quite'} Correct answer: ${letters[q.answer]}.</div><div class="explain"><strong>Why this is right:</strong> ${esc(q.explanation)}</div>${q.concept?`<div class="takeaway"><strong>📘 Key concept — ${esc(q.concept_term)}:</strong> ${esc(q.concept)}</div>`:''}${q.practical?`<div class="takeaway"><strong>Put it into practice:</strong> ${esc(q.practical)}</div>`:''}`;
+ let calib=result==='wrong'&&c==='High'?' You were highly confident and wrong: this is the kind of gap to review.':'';
+ if(mode==='learn'){
+  fb.innerHTML=`<div class="verdict ${correct?'good':'bad'}">${tag} · ${pts>=0?'+':''}${pts} pts (${c} confidence).${calib}</div><div class="explain"><strong>Answer:</strong> ${esc(ansText(q))}</div><div class="explain" style="margin-top:8px"><strong>Why:</strong> ${esc(q.explanation)}</div>${q.concept?`<div class="takeaway"><strong>📘 Key concept — ${esc(q.concept_term)}:</strong> ${esc(q.concept)}</div>`:''}${q.practical?`<div class="takeaway"><strong>Put it into practice:</strong> ${esc(q.practical)}</div>`:''}`;
+ }else fb.innerHTML='<p class="small" style="margin:0">Answer recorded. Explanations will appear when the round ends.</p>';
+ document.getElementById('next').disabled=false;scoreEl.textContent=`Round ${score} / ${position+1} · ${points} pts`;
 }
 function advance(){if(!answered)return;position++;if(position>=deck.length){finish();return;}render();}
 function finish(){
  scoreEl.textContent=`Round complete · ${score}/${deck.length}`;let pct=Math.round(score/deck.length*100),missed=sessionResults.filter(x=>!x.correct);
- app.innerHTML=`<div class="finish"><div class="brand">${sessionKind==='mistakes'?'Mistake review complete':sessionKind==='bookmarks'?'Bookmark review complete':'Practice round complete'}</div><h2>${pct}%</h2><p>You answered <strong>${score}</strong> correctly out of ${deck.length}.</p><p>${pct>=85?'Strong round. Keep testing yourself on the harder scenarios.':pct>=65?'Good progress. Review the explanations and retry the missed concepts.':'Use this as a baseline. Work through the explanations, then try the same topic again.'}</p>
+ app.innerHTML=`<div class="finish"><div class="brand">${sessionKind==='mistakes'?'Mistake review complete':sessionKind==='bookmarks'?'Bookmark review complete':'Practice round complete'}</div><h2>${pct}%</h2><p>You answered <strong>${score}</strong> correctly out of ${deck.length}. Calibrated score: <strong>${points}</strong> pts (confident wrong answers cost points; "I don't know" is free).</p><p>${pct>=85?'Strong round. Keep testing yourself on the harder scenarios.':pct>=65?'Good progress. Review the explanations and retry the missed concepts.':'Use this as a baseline. Work through the explanations, then try the same topic again.'}</p>
  <div class="grid"><div class="statbox"><strong>${missed.length}</strong><span>Questions missed</span></div><div class="statbox"><strong>${stats().mastered}</strong><span>Questions showing mastery</span></div></div>
  <div class="toolbar" style="justify-content:center"><button class="primary" id="reviewSession">Review missed questions (${missed.length})</button><button class="secondary" id="again">Practise this set again</button><button class="secondary" id="home">Dashboard</button></div>
  <div id="examReview"></div></div>`;
  document.getElementById('reviewSession').onclick=()=>{if(missed.length)startRound(missed.map(x=>x.q),'mistakes');else alert('No missed questions in this round.');};
  document.getElementById('again').onclick=()=>startRound(deck,'all');document.getElementById('home').onclick=dashboard;
- if(mode==='exam'&&missed.length){document.getElementById('examReview').innerHTML='<div class="divider"></div><h3 class="section-title">Exam review</h3>'+missed.map(x=>`<div class="topicrow" style="display:block"><strong>${esc(x.q.question)}</strong><p class="small">Correct answer: ${letters[x.q.answer]}. ${esc(x.q.explanation)}</p>${x.q.concept?`<p class="small">📘 <strong>${esc(x.q.concept_term)}:</strong> ${esc(x.q.concept)}</p>`:''}</div>`).join('');}
+ if(mode==='exam'&&missed.length){document.getElementById('examReview').innerHTML='<div class="divider"></div><h3 class="section-title">Exam review</h3>'+missed.map(x=>`<div class="topicrow" style="display:block"><strong>${esc(x.q.question)}</strong><p class="small">Correct answer: ${esc(ansText(x.q))}. ${esc(x.q.explanation)}</p>${x.q.concept?`<p class="small">📘 <strong>${esc(x.q.concept_term)}:</strong> ${esc(x.q.concept)}</p>`:''}</div>`).join('');}
 }
 async function init(){try{let r=await fetch('./questions.yaml');if(!r.ok)throw Error('Could not load questions.yaml (HTTP '+r.status+').');let d=JSON.parse(await r.text());if(!d.questions||!d.questions.length)throw Error('The question bank is empty.');bank=d.questions;dashboard();}catch(e){app.innerHTML=`<div style="text-align:center;color:var(--bad)"><h2>Could not load the question bank</h2><p>${esc(e.message)}</p><p>If you opened index.html directly from disk, use the Start Quiz script or the hosted GitHub Pages site instead.</p></div>`;}}
 init();

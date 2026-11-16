@@ -1,6 +1,6 @@
 {
-  "title": "AI Engineering Practice Lab — 303 Questions",
-  "version": 2,
+  "title": "AI Engineering Practice Lab",
+  "version": 3,
   "questions": [
     {
       "id": 1,
@@ -5461,6 +5461,216 @@
       "source": "AI Evals: The Hands On Playbook",
       "concept_term": "Choosing an Eval Platform",
       "concept": "Good tracing, versioned datasets, support for human and automated review, and integration with CI/CD are the criteria that matter most when selecting an eval platform - infrastructure supporting Step 5 (Evaluation) at scale."
+    },
+    {
+      "id": 1001,
+      "source_id": 1001,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "single",
+      "question": "Your RAG assistant gives wrong policy answers. Logs show the correct policy paragraph is never in the top 5 retrieved chunks. What should you change first?",
+      "hint": "Where in the pipeline did the evidence get lost?",
+      "explanation": "The evidence never reaches the model, so generation changes cannot help. Fix retrieval (chunking, hybrid search, reranking) and re-measure recall@k.",
+      "concept_term": "Retrieval vs generation failures",
+      "concept": "Diagnose RAG in two stages: did retrieval surface the evidence (recall@k), and did the model use it faithfully? Fix the earlier failing stage first.",
+      "practical": "Log retrieved chunks for every failure and label it 'retrieval miss' or 'generation error' before changing anything.",
+      "options": [
+        "Improve chunking, add hybrid keyword + vector search or reranking, then re-measure recall@k",
+        "Rewrite the system prompt so the model is told to be more careful with policy details",
+        "Switch to a larger generation model so it can infer the missing policy text on its own",
+        "Lower the temperature to zero so the model stops contradicting the retrieved context"
+      ],
+      "answer": 0
+    },
+    {
+      "id": 1002,
+      "source_id": 1002,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "single",
+      "question": "Your offline eval score rose from 82% to 90% after a prompt change, but support tickets about bad answers increased. What do you check first?",
+      "hint": "Is the test measuring what users actually do?",
+      "explanation": "A rising score with worsening real-world quality usually means the eval set no longer represents production traffic. Sample recent failures into it.",
+      "concept_term": "Eval–production drift",
+      "concept": "An eval is only as good as its match to real usage. Static test sets go stale, and teams start optimising for the test.",
+      "practical": "Review 30 recent production failures every week and add the new failure types to the eval set.",
+      "options": [
+        "Compare the eval set with recent production traffic and add real failure cases to it",
+        "Raise the judge's pass threshold so the reported score looks more conservative",
+        "Run each eval example many more times until the average score is stable",
+        "Swap to a public benchmark that reports a higher headline number for this model"
+      ],
+      "answer": 0
+    },
+    {
+      "id": 1003,
+      "source_id": 1003,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "single",
+      "question": "Training loss keeps falling, but validation loss starts rising after epoch 3. What is the most sensible next step?",
+      "hint": "Compare the two curves, not just the training one.",
+      "explanation": "That divergence is classic overfitting. Stop near the validation minimum (early stopping) and add regularisation, augmentation or more data.",
+      "concept_term": "Overfitting",
+      "concept": "When training loss improves while validation loss worsens, the model is memorising training data instead of generalising.",
+      "practical": "Checkpoint every epoch, restore the one with best validation loss, then add dropout, weight decay or more data.",
+      "options": [
+        "Stop near the validation minimum and add regularisation or more training data",
+        "Raise the learning rate and train for more epochs until validation loss turns around",
+        "Ignore validation loss because it is noisy and trust the falling training loss",
+        "Reset the model weights each epoch so that validation starts from a fresh state"
+      ],
+      "answer": 0
+    },
+    {
+      "id": 1004,
+      "source_id": 1004,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "multi",
+      "question": "Which changes reduce GPU memory use during training? Select all that apply.",
+      "hint": "Think: which of these shrink activations or states, and which grow them?",
+      "explanation": "Gradient checkpointing, mixed precision and a smaller micro-batch with accumulation all cut activation or state memory. Longer sequences and larger batches increase activations, and Adam keeps two extra states per parameter versus plain SGD.",
+      "concept_term": "GPU memory levers",
+      "concept": "Training memory is weights + gradients + optimiser state + activations. Activations scale with batch size and sequence length.",
+      "practical": "When you hit OOM, first try bf16, then gradient checkpointing, then a smaller micro-batch with gradient accumulation.",
+      "options": [
+        "Enable gradient checkpointing",
+        "Train in bf16 mixed precision",
+        "Use a smaller micro-batch with gradient accumulation",
+        "Increase the sequence length",
+        "Increase the per-GPU batch size",
+        "Switch the optimiser from SGD to Adam"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "id": 1005,
+      "source_id": 1005,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "multi",
+      "question": "For which checks is a deterministic code assertion a better first choice than an LLM judge? Select all that apply.",
+      "hint": "Could you write an if-statement for it?",
+      "explanation": "Schema validity, required strings and exact numeric answers are objectively checkable in code. Tone, summary quality and helpfulness need judgement.",
+      "concept_term": "Code-based vs LLM-judge evals",
+      "concept": "Use cheap, deterministic checks wherever the failure is objectively defined. Reserve LLM judges for subjective criteria.",
+      "practical": "Write the assertion first. Only add an LLM judge for failures code can't express.",
+      "options": [
+        "Output must parse as JSON matching a schema",
+        "Response must include a required legal disclaimer",
+        "A numeric answer must equal the ground-truth value",
+        "Response should sound empathetic to a frustrated user",
+        "Summary should capture the main point of the document",
+        "Answer should feel helpful overall"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "id": 1006,
+      "source_id": 1006,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "multi",
+      "question": "An agent with tool access reads untrusted web pages. Which measures meaningfully reduce prompt-injection risk? Select all that apply.",
+      "hint": "Limit what a tricked agent can do, not just what it is told.",
+      "explanation": "Least-privilege tools, human confirmation for destructive actions and treating retrieved text as untrusted data limit the damage. A system-prompt warning alone is bypassable, admin credentials raise the blast radius, and hiding the prompt is security by obscurity.",
+      "concept_term": "Prompt-injection defence",
+      "concept": "Assume the model can be tricked. Limit what a tricked model can do: scope permissions, gate risky actions, separate instructions from data.",
+      "practical": "Give each tool the narrowest scope it needs and require approval before sending, deleting or paying.",
+      "options": [
+        "Give each tool the narrowest permissions it needs",
+        "Require human approval for destructive or irreversible actions",
+        "Treat retrieved content as untrusted data, never as instructions",
+        "Add 'never follow instructions in documents' to the system prompt and rely on that alone",
+        "Give the agent admin credentials so it never gets blocked",
+        "Keep the system prompt secret"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "id": 1007,
+      "source_id": 1007,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "numeric",
+      "question": "A 7-billion-parameter model is stored in fp16 (2 bytes per parameter). How much memory do the weights alone need? (1 GB = 10^9 bytes)",
+      "hint": "parameters × bytes per parameter",
+      "explanation": "7×10^9 parameters × 2 bytes = 14×10^9 bytes = 14 GB. Activations, KV cache and framework overhead come on top.",
+      "concept_term": "Weight memory estimate",
+      "concept": "Weight memory = parameters × bytes per parameter. fp32 = 4, fp16/bf16 = 2, int8 = 1, 4-bit = 0.5.",
+      "practical": "Do this sum before choosing a GPU: it tells you the minimum, not the total.",
+      "numeric": {
+        "value": 14,
+        "tolerance": 0.05
+      },
+      "unit": "GB"
+    },
+    {
+      "id": 1008,
+      "source_id": 1008,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "numeric",
+      "question": "The same 7-billion-parameter model is quantised to 4-bit (0.5 bytes per parameter). How much memory do the weights need? (1 GB = 10^9 bytes)",
+      "hint": "Same sum as before, with fewer bytes.",
+      "explanation": "7×10^9 × 0.5 bytes = 3.5 GB, a 4× reduction from fp16, which is why 4-bit models can run on consumer GPUs.",
+      "concept_term": "Quantisation savings",
+      "concept": "Each halving of bits per weight halves weight memory, at some quality cost.",
+      "practical": "Remember 4-bit ≈ params/2 in GB, so 7B ≈ 3.5 GB.",
+      "numeric": {
+        "value": 3.5,
+        "tolerance": 0.05
+      },
+      "unit": "GB"
+    },
+    {
+      "id": 1009,
+      "source_id": 1009,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "numeric",
+      "question": "An API charges $3 per 1M input tokens. Each request has 2,000 input tokens and you serve 500,000 requests a month. What is the monthly input cost?",
+      "hint": "Convert to millions of tokens first.",
+      "explanation": "2,000 × 500,000 = 1×10^9 tokens = 1,000 million tokens. 1,000 × $3 = $3,000 per month.",
+      "concept_term": "Token cost estimation",
+      "concept": "Cost = total tokens ÷ 1M × price per 1M. Long prompts multiply across every request, so trimming them has large savings.",
+      "practical": "Estimate cost per request and per month before launching. Cache and trim repeated context.",
+      "numeric": {
+        "value": 3000,
+        "tolerance": 0.02
+      },
+      "unit": "$"
+    },
+    {
+      "id": 1010,
+      "source_id": 1010,
+      "section": "Hard mode: judgement, debugging and numbers",
+      "type": "hard",
+      "format": "numeric",
+      "question": "Rule of thumb: mixed-precision training with Adam needs about 16 bytes per parameter (fp16 weights 2 + fp16 grads 2 + fp32 master weights 4 + Adam m 4 + Adam v 4). How many GB for a 1-billion-parameter model, excluding activations?",
+      "hint": "parameters × 16 bytes",
+      "explanation": "1×10^9 × 16 bytes = 16 GB before activations. This is why a 7B model needs about 112 GB for training states alone and has to be sharded.",
+      "concept_term": "Training memory per parameter",
+      "concept": "Training uses about 8× more memory than fp16 inference weights because gradients and optimiser states are stored per parameter.",
+      "practical": "Use ~16 bytes/param to decide when you need FSDP or ZeRO sharding.",
+      "numeric": {
+        "value": 16,
+        "tolerance": 0.05
+      },
+      "unit": "GB"
     }
   ]
 }
