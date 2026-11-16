@@ -1,6 +1,6 @@
 # AI Engineering Practice Lab
 
-A free, no-dependency quiz app with **303 multiple-choice questions** for learning AI engineering: ML lifecycle, LLMs, RAG, evals, serving, agents, distributed training and more.
+A free, no-dependency quiz app with **about 180 curated questions** for learning AI engineering: ML lifecycle, LLMs, RAG, evals, serving, agents, distributed training and more.
 
 **Live site:** https://austinechi.github.io/AI_Engineering_Practice_Lab/
 
