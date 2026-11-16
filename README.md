@@ -4,7 +4,10 @@ A free, no-dependency quiz app with **about 180 curated questions** for learning
 
 **Live site:** https://austinechi.github.io/AI_Engineering_Practice_Lab/
 
+**Study notes:** https://austinechi.github.io/AI_Engineering_Practice_Lab/notes.html (13 connected topics; the quiz is the exam on them)
+
 ## Features
+- **Study notes** page: topic navigation, search, mark-as-read, quick-reference symptom table and glossary; the quiz links back to the matching note
 - **Learning mode**: hints, instant feedback, explanations and practical takeaways
 - **Exam mode**: no feedback until the round ends
 - Answer order is shuffled every time, so you can't memorise letters

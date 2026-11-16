@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Engineering Study Notes</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141c30;--panel2:#1b2740;--ink:#eef3ff;--muted:#9eabc4;--line:#2b3957;--accent:#8eb6ff;--good:#8ee0b1;--bad:#ff9b9b;--warn:#f1c778;--code:#0f1830}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f6fc;--panel:#fff;--panel2:#eef3fb;--ink:#17233a;--muted:#5e6d86;--line:#d7e0ef;--accent:#315fba;--good:#176b45;--bad:#b33b48;--warn:#8a5a00;--code:#eaf0fb}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--accent)}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);max-width:1180px;margin:0 auto}
+nav{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:22px 16px;border-right:1px solid var(--line)}
+nav .brand{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:800;margin-bottom:6px}
+nav h1{font-size:19px;margin:0 0 12px;line-height:1.2}
+nav ol{list-style:none;margin:0;padding:0}nav li a{display:flex;gap:9px;align-items:flex-start;text-decoration:none;color:var(--ink);padding:7px 9px;border-radius:9px;font-size:14px;line-height:1.35}
+nav li a:hover{background:var(--panel2)}nav li a.active{background:var(--panel2);box-shadow:inset 3px 0 0 var(--accent)}
+nav .n{color:var(--muted);min-width:20px;font-variant-numeric:tabular-nums}nav li.done a .t{color:var(--muted);text-decoration:line-through}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:650;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--accent);color:#0b1427;border-color:transparent}
+#q{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:14px;margin-bottom:10px}
+main{padding:28px clamp(16px,4vw,44px) 80px;min-width:0}
+section{margin-bottom:54px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+section.hide{display:none}
+h2{font-size:clamp(24px,4vw,31px);line-height:1.15;margin:0 0 6px;letter-spacing:-.02em}
+h3{font-size:18px;margin:26px 0 8px}h4{font-size:15px;margin:18px 0 6px;color:var(--accent)}
+p{margin:8px 0}ul,ol.l{margin:6px 0 10px;padding-left:22px}li{margin:4px 0}
+.oneline{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;margin:12px 0 16px}
+.oneline b.lbl{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.remember{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--good);border-radius:12px;padding:12px 16px;margin:20px 0 8px}
+.remember b.lbl{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--good);margin-bottom:3px}
+.watch{border-left:4px solid var(--warn);background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:10px 16px;margin:14px 0}
+.watch b.lbl{color:var(--warn);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+table{border-collapse:collapse;width:100%;margin:10px 0 16px;font-size:14.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--panel2);font-size:13px}td:first-child{font-weight:600}
+code{background:var(--code);padding:1px 6px;border-radius:6px;font-size:.9em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.flow{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;overflow-x:auto;white-space:pre;line-height:1.5}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 16px 8px}
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+.foot label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+.sub{color:var(--muted);margin:0 0 12px}
+.menu{display:none}
+@media(max-width:860px){.layout{display:block}nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}nav ol{display:none}nav.open ol{display:block}.menu{display:inline-block}.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav id="nav">
+ <div class="brand">AI Engineering</div><h1>Study notes</h1>
+ <div class="tools"><a class="btn primary" href="index.html">Take the quiz →</a><button class="btn" id="theme">☀ Light</button><button class="btn menu" id="menu">☰ Topics</button></div>
+ <input id="q" type="search" placeholder="Search the notes (e.g. KV cache, leakage)…" aria-label="Search notes">
+ <ol id="toc"></ol>
+</nav>
+<main id="main">
+
+<section id="start" data-title="Start here: the big picture" data-quiz="ML fundamentals and debugging">
+<h2>Start here: the big picture</h2>
+<p class="sub">Read this first. It is the map that every other topic hangs on.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>AI engineering is building a system around a model: get good data, train or choose a model, <b>measure</b> it honestly, ship it safely, and keep watching it. Most problems are found by asking <i>"which stage is failing?"</i> and fixing the earliest broken one.</div>
+
+<h3>Two running examples used in all notes</h3>
+<div class="cols">
+<div class="card"><h4>A. The fraud model (classic ML)</h4><ul><li>Input: rows of transactions (amount, time, merchant…)</li><li>Output: fraud / not fraud</li><li>Only ~1% of rows are fraud (<b>imbalanced</b>)</li><li>Used to explain: data splits, leakage, metrics, training problems, drift</li></ul></div>
+<div class="card"><h4>B. The policy assistant (LLM app)</h4><ul><li>Staff ask questions about company policy PDFs</li><li>Answer must be correct, cited, and respect who may see what</li><li>Used to explain: RAG, prompts, agents, security, evals, serving, cost</li></ul></div>
+</div>
+
+<h3>The classic 7-step ML lifecycle</h3>
+<div class="flow">1 Collect data → 2 Prepare data → 3 Choose model → 4 Train → 5 Evaluate → 6 Tune → 7 Deploy &amp; monitor
+        ▲___________________________ loops back all the time ___________________________|</div>
+<ul>
+<li>Real projects are <b>loops</b>, not a straight line. A production problem sends you back to data.</li>
+<li>Data work (collecting, cleaning, labelling) takes most of the time. "70–80%" is a rule of thumb, not a measured fact.</li>
+</ul>
+
+<h3>Where each topic fits</h3>
+<table>
+<tr><th>Lifecycle step</th><th>Topic in these notes</th></tr>
+<tr><td>1–2 Data</td><td>1 Data, splits and leakage</td></tr>
+<tr><td>3 Choose model</td><td>2 Metrics and model choice · 6 Adapting LLMs · 8 APIs vs self-hosting</td></tr>
+<tr><td>4 Train</td><td>3 Training and debugging · 4 GPU memory and scaling · 6 Adapting LLMs</td></tr>
+<tr><td>5 Evaluate</td><td>2 Metrics · 10 Evaluating LLM apps</td></tr>
+<tr><td>7 Deploy and monitor</td><td>5 How LLMs work · 7 RAG · 8 APIs · 9 Agents · 11 Serving · 12 Production and governance</td></tr>
+</table>
+
+<h3>The picture of an LLM application (example B)</h3>
+<div class="flow">user question
+  → guardrails (input checks)
+  → retrieval (find relevant chunks)          ← Topic 7
+  → prompt + context assembly                  ← Topics 5, 8
+  → model (API or self-hosted)                 ← Topics 5, 8, 11
+  → output validation (schema, grounding)      ← Topics 7, 8
+  → tools / actions (with permissions)         ← Topic 9
+  → answer to user
+everything above is logged as a <b>trace</b> → evals + monitoring ← Topics 10, 12</div>
+
+<h3>Three habits that answer most questions</h3>
+<ol class="l">
+<li><b>Measure before you change.</b> Profile before optimising; read traces before guessing; get a baseline before tuning.</li>
+<li><b>Find the earliest failing stage.</b> Data → retrieval → generation → validation. Fixing a later stage cannot repair an earlier one.</li>
+<li><b>Change one thing at a time.</b> Otherwise you cannot tell what helped.</li>
+</ol>
+
+<h3>The decision order for LLM problems</h3>
+<div class="flow">1. Prompt / context engineering   (cheapest, fastest)
+2. RAG                             (missing or changing knowledge)
+3. Fine-tuning                     (style, format, stable behaviour)
+and: API first → self-host later (when volume, data residency or customisation justify it)</div>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Pipelines loop; production issues send you back to data.</li><li>Diagnose the earliest failing stage first.</li><li>Prompt → RAG → fine-tune; API → self-host.</li></ul></div>
+</section>
+
+<section id="data" data-title="Data, splits and leakage" data-quiz="ML fundamentals and debugging">
+<h2>1. Data, splits and leakage</h2>
+<p class="sub">Example A: the fraud model. Most "too good to be true" results start here.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Your evaluation is only honest if the model has never seen, <i>or been influenced by</i>, the data it is tested on. <b>Leakage</b> is any way information sneaks across that wall.</div>
+
+<h3>The three splits</h3>
+<table>
+<tr><th>Split</th><th>Used for</th><th>Rule</th></tr>
+<tr><td>Training</td><td>Fitting the model (and fitting scalers/imputers)</td><td>The only place you "learn" from</td></tr>
+<tr><td>Validation</td><td>Choosing models, tuning hyperparameters, early stopping</td><td>Used many times</td></tr>
+<tr><td>Test</td><td>Final, unbiased score</td><td>Touch <b>once</b>, at the very end. If you tweak based on test results, it becomes a second validation set and the score is optimistic ("indirect overfitting")</td></tr>
+</table>
+
+<h3>Types of leakage (and the fix for each)</h3>
+<table>
+<tr><th>Leak</th><th>What happens</th><th>Fix</th></tr>
+<tr><td>Preprocessing leak</td><td>You scale or impute using statistics from <i>all</i> data, so test info enters training</td><td>Split first. Fit scaler/imputer on training only, then apply to val/test. Use a scikit-learn <code>Pipeline</code></td></tr>
+<tr><td>Target / feature leak</td><td>A feature encodes the label, or isn't available at prediction time (e.g. "chargeback filed")</td><td>Only use information that exists at the moment of prediction ("point-in-time")</td></tr>
+<tr><td>Duplicate leak</td><td>Same or near-same rows land in both train and test; model memorises them</td><td>Deduplicate before splitting; group related rows</td></tr>
+<tr><td>Time leak</td><td>Random K-fold on time-ordered data lets the future train the past</td><td>Chronological split: train on past, validate on later periods</td></tr>
+</table>
+<div class="watch"><b class="lbl">Red flag</b> A model gets 99.8% on its first try. Suspect leakage (duplicates, a label-encoding feature, bad split) <b>before</b> celebrating.</div>
+
+<h3>Class imbalance</h3>
+<ul>
+<li>With 99% legitimate transactions, a dummy model that always says "legit" scores <b>99% accuracy and catches 0% of fraud</b>. Accuracy misleads.</li>
+<li>Use precision, recall, F1, PR curves (see Topic 2) instead.</li>
+<li><code>stratify=y</code> in <code>train_test_split</code> keeps class proportions <i>approximately</i> the same in each split (not guaranteed identical).</li>
+<li>Model predicts only the majority class? Check class imbalance, loss weighting (class weights), the learning rate, and the threshold.</li>
+</ul>
+
+<h3>Is the training data representative?</h3>
+<ul>
+<li><b>Coverage gap:</b> great on daytime photos, fails at night, because night images were missing from training. Fix the data, not the architecture.</li>
+<li><b>Shortcut learning (spurious correlation):</b> 98% accuracy but the model looks at a corner watermark. Inspect with Grad-CAM heatmaps.</li>
+<li>Always check performance on <b>slices</b> (night vs day, region, customer segment). Averages hide failures.</li>
+</ul>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Split first, then fit preprocessing on train only.</li><li>Test set: once.</li><li>Time data → time-based split.</li><li>Great score on attempt one = look for leakage.</li><li>Imbalanced data → never trust accuracy alone.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=ML%20fundamentals%20and%20debugging">Practise this topic →</a><label><input type="checkbox" data-done="data"> Mark as read</label></div>
+</section>
+
+<section id="metrics" data-title="Metrics and choosing models" data-quiz="ML fundamentals and debugging">
+<h2>2. Metrics and choosing models</h2>
+<p class="sub">Example A again: how do we know the fraud model is good enough, and which one to ship?</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>A single number never tells the whole story. Pick metrics that match the <b>cost of each kind of mistake</b>, and compare models under identical conditions.</div>
+
+<h3>The confusion matrix in words (fraud = "positive")</h3>
+<table>
+<tr><th>Term</th><th>Meaning</th><th>Formula</th></tr>
+<tr><td>TP / FP</td><td>Fraud caught / legit wrongly flagged</td><td></td></tr>
+<tr><td>FN / TN</td><td>Fraud missed / legit correctly passed</td><td></td></tr>
+<tr><td>Precision</td><td>Of the ones I flagged, how many were truly fraud?</td><td>TP / (TP+FP)</td></tr>
+<tr><td>Recall (TPR)</td><td>Of all real fraud, how much did I catch?</td><td>TP / (TP+FN)</td></tr>
+<tr><td>TNR</td><td>Of all legit cases, how many did I correctly pass?</td><td>TN / (TN+FP)</td></tr>
+<tr><td>F1</td><td>Balance of precision and recall</td><td>harmonic mean</td></tr>
+</table>
+<p>You will meet <b>TPR and TNR</b> again when we validate LLM judges (Topic 10). Same idea, different system.</p>
+
+<h3>Thresholds and curves</h3>
+<ul>
+<li>A classifier outputs a probability. The <b>threshold</b> turns it into yes/no. <code>0.5</code> is only a default.</li>
+<li>Choose the threshold on <b>validation data</b> using the cost of false positives vs false negatives (missing fraud vs blocking a real customer).</li>
+<li><b>ROC-AUC</b> measures ranking ability across all thresholds. A model can have high ROC-AUC and still poor precision at your chosen threshold, especially when positives are rare. Look at the precision-recall behaviour, class prevalence and the threshold.</li>
+<li><b>Calibration:</b> do "90% confident" predictions come true 90% of the time? Big neural nets are often overconfident even with low training loss. Fix with post-hoc calibration such as <b>temperature scaling</b>.</li>
+</ul>
+
+<h3>Comparing models fairly</h3>
+<ul>
+<li>Keep identical: data splits, preprocessing, metrics, test conditions.</li>
+<li><b>Variance:</b> scores vary between runs. Repeat with several seeds/splits and <b>report the spread</b>, not one number.</li>
+<li>Seeds help but don't guarantee identical results: some GPU kernels and distributed operations are nondeterministic, and environments differ.</li>
+<li>Similar quality? Then pick on <b>latency, cost, reliability, maintainability</b>, not a tiny accuracy edge.</li>
+</ul>
+
+<h3>Before "improve accuracy by 5 points"</h3>
+<ol class="l"><li>Clarify the real metric and business goal.</li><li>Get a baseline.</li><li>Analyse errors by slice (where does it fail?).</li></ol>
+<ul>
+<li><b>Pretrained vs from scratch:</b> decide using task fit, data available, compute budget, licence, latency and quality needs. Pretrained usually saves a lot.</li>
+<li><b>Slices:</b> new model worse for one customer segment → evaluate by segment and check data coverage; aggregate metrics hide this.</li>
+</ul>
+
+<h3>Explaining models</h3>
+<ul>
+<li><b>SHAP</b> values show how much each feature pushed <i>one</i> prediction up or down. Useful for regulated stakeholders; document their limits.</li>
+<li><b>Importance ≠ causation.</b> A feature the model uses a lot is not proven to cause the outcome.</li>
+</ul>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Pick the threshold from costs, not habit.</li><li>High AUC ≠ good precision at your threshold.</li><li>Report variance, compare under identical conditions.</li><li>Always diagnose (baseline + error slices) before tuning.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=ML%20fundamentals%20and%20debugging">Practise this topic →</a><label><input type="checkbox" data-done="metrics"> Mark as read</label></div>
+</section>
+
+<section id="training" data-title="Training and debugging neural nets" data-quiz="ML fundamentals and debugging">
+<h2>3. Training and debugging neural networks</h2>
+<p class="sub">Reading loss curves and PyTorch gotchas. Most debugging questions are "symptom → likely cause".</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Training repeats: forward pass → compute loss → backward pass (gradients) → optimiser step → clear gradients. Every bug shows up as a strange loss curve or a strange resource graph.</div>
+
+<h3>One training step</h3>
+<div class="flow">loss = loss_fn(model(x), y)   # forward + loss
+loss.backward()               # compute gradients
+optimizer.step()              # update weights
+optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)</div>
+
+<h3>Loss-curve symptom table</h3>
+<table>
+<tr><th>You see</th><th>Likely meaning</th><th>First things to try</th></tr>
+<tr><td>Train loss ↓ , validation loss ↑</td><td><b>Overfitting</b> (memorising)</td><td>Early stopping near validation minimum, dropout/weight decay, more data/augmentation, fewer epochs</td></tr>
+<tr><td>Both high and flat from epoch 1</td><td><b>Underfitting</b>, bad learning rate, or broken labels/feature alignment</td><td>Check labels and features, tune learning rate, bigger model</td></tr>
+<tr><td>Loss → NaN</td><td>Exploding gradients (LR too high), extreme inputs, <code>log(0)</code>, divide by zero</td><td>Lower LR, clip gradients, normalise inputs, fix the loss</td></tr>
+<tr><td>Gradient norm grows every step, then crash</td><td><b>Exploding gradients</b></td><td>Gradient clipping, lower LR, check normalisation layers</td></tr>
+<tr><td>Early layers don't update</td><td><b>Vanishing gradients</b> (sigmoid/tanh in deep nets)</td><td>ReLU-type activations, residual connections, normalisation</td></tr>
+<tr><td>Validation loss lower than training loss early on</td><td>Usually normal: dropout is on in training but off in eval; training loss is averaged over an epoch of improving weights</td><td>Nothing; it's not a bug</td></tr>
+<tr><td>Loss won't drop even on a tiny batch</td><td>A bug in the loop/loss/labels</td><td>Run the "overfit a single batch" test</td></tr>
+</table>
+
+<h3>Sanity checks</h3>
+<ul>
+<li><b>Overfit a single batch:</b> train on ~8 samples. Loss should go near zero. If not, the model, loss, labels or optimiser are wired wrong.</li>
+<li>Unit-test the architecture (shapes, one forward/backward) before an expensive multi-hour run.</li>
+<li>Shape error <code>mat1 and mat2 shapes cannot be multiplied (64x128 and 256x10)</code> → inner dimensions differ: the layer expects 256 inputs but got 128.</li>
+<li>Device error ("expected all tensors on same device") → move model <b>and</b> data to the same device.</li>
+</ul>
+
+<h3>PyTorch gotchas</h3>
+<table>
+<tr><th>Mistake</th><th>Result</th></tr>
+<tr><td>Forgot <code>optimizer.zero_grad()</code></td><td>Gradients pile up → erratic, oversized updates</td></tr>
+<tr><td>Forgot <code>model.eval()</code></td><td>Dropout stays active, BatchNorm keeps updating → inconsistent predictions</td></tr>
+<tr><td>Forgot <code>torch.no_grad()</code> in validation/inference</td><td>PyTorch builds a graph you don't need → memory spike when validation starts</td></tr>
+<tr><td><code>torch.log(probs)</code> with zeros</td><td>-inf/NaN → clamp with a tiny epsilon, or use stable combined losses (<code>F.cross_entropy</code>, <code>BCEWithLogitsLoss</code>)</td></tr>
+</table>
+<p><code>eval()</code> and <code>no_grad()</code> solve <b>different</b> problems; inference normally uses both.</p>
+
+<h3>Stabilisers you should recognise</h3>
+<ul>
+<li><b>Learning-rate warmup:</b> start tiny, ramp up. Early on weights are random and Adam's statistics are noisy, so big steps destabilise training. Standard for transformers.</li>
+<li><b>Gradient clipping:</b> cap the gradient norm so one outlier batch can't blow up training.</li>
+<li><b>Very large batch without adjusting LR:</b> fewer updates, can converge to sharper minima that generalise worse. The relationship is nuanced.</li>
+<li><b>Early stopping:</b> stop when validation stops improving.</li>
+<li><b>bf16 vs fp16:</b> see Topic 4.</li>
+</ul>
+
+<h3>Speed and data loading</h3>
+<ul>
+<li><b>GPU at 15%, CPU at 100%</b> → the data pipeline is the bottleneck. Profile first, then raise <code>num_workers</code>, use <code>pin_memory=True</code>, precompute transforms.</li>
+<li>500 GB dataset that doesn't fit in RAM → <code>IterableDataset</code> streaming shards (WebDataset / Parquet).</li>
+<li>Save with <code>model.state_dict()</code> (weights only; portable; you recreate the architecture in code) rather than pickling the whole object (fragile across refactors).</li>
+</ul>
+
+<h3>Tokenisation bug (preview of Topic 5)</h3>
+<p>A domain term like "hyperglycemia" gets split into 6 fragments. First inspect tokenisation; if justified, <code>add_tokens</code> to the tokenizer and <code>resize_token_embeddings</code> before fine-tuning.</p>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Train ↓ / val ↑ = overfit. Both flat-high = underfit or broken pipeline.</li><li>NaN or growing grad-norm = exploding gradients → clip + lower LR.</li><li>Always: zero_grad, eval(), no_grad().</li><li>Low GPU use + busy CPU = data loading.</li><li>If it can't overfit one batch, there's a bug.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=ML%20fundamentals%20and%20debugging">Practise this topic →</a><label><input type="checkbox" data-done="training"> Mark as read</label></div>
+</section>
+
+<section id="memory" data-title="GPU memory and scaling" data-quiz="Training at scale and GPU memory">
+<h2>4. GPU memory and scaling</h2>
+<p class="sub">Where memory goes, how to shrink it, and how to split work across GPUs.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Memory = <b>parameters × bytes per parameter</b>, plus extra for training state and activations. Know the numbers and the four ways to split a job across GPUs.</div>
+
+<h3>Bytes per parameter</h3>
+<table>
+<tr><th>Format</th><th>Bytes</th><th>7B model weights</th></tr>
+<tr><td>fp32</td><td>4</td><td>28 GB</td></tr>
+<tr><td>fp16 / bf16</td><td>2</td><td><b>14 GB</b></td></tr>
+<tr><td>int8</td><td>1</td><td>7 GB</td></tr>
+<tr><td>4-bit</td><td>0.5</td><td><b>3.5 GB</b></td></tr>
+</table>
+<p>Formula: <b>weight memory = parameters × bytes per parameter</b>. This is the <i>minimum</i>; KV cache, activations and overhead come on top.</p>
+
+<h3>Why training needs much more than inference</h3>
+<p>Mixed-precision training with Adam keeps, per parameter:</p>
+<table>
+<tr><th>Item</th><th>Bytes</th></tr>
+<tr><td>fp16/bf16 weights</td><td>2</td></tr><tr><td>fp16/bf16 gradients</td><td>2</td></tr>
+<tr><td>fp32 master weights</td><td>4</td></tr><tr><td>Adam momentum (m)</td><td>4</td></tr><tr><td>Adam variance (v)</td><td>4</td></tr>
+<tr><td><b>Total</b></td><td><b>≈ 16 bytes/param</b> (before activations)</td></tr>
+</table>
+<ul><li>1B params ≈ 16 GB; 7B ≈ 112 GB for training state alone. That's why big models need sharding (below).</li><li>Activations (intermediate results kept for backprop) grow with batch size and sequence length.</li></ul>
+
+<h3>OOM toolbox ("CUDA out of memory")</h3>
+<table>
+<tr><th>Tool</th><th>What it does</th><th>Trade-off</th></tr>
+<tr><td>Smaller batch</td><td>Fewer activations</td><td>Noisier updates</td></tr>
+<tr><td>Gradient accumulation</td><td>Sum gradients over several micro-batches before <code>step()</code>; simulates a big batch</td><td>More forward/backward passes → slower</td></tr>
+<tr><td>Mixed precision (bf16/fp16)</td><td>Halves many tensors</td><td>fp16 needs loss scaling (below)</td></tr>
+<tr><td>Gradient (activation) checkpointing</td><td>Throws away activations and recomputes them in backward pass</td><td>Much less memory, about 20–30% slower</td></tr>
+<tr><td>Shorter sequences</td><td>Activations shrink</td><td>Less context</td></tr>
+</table>
+<div class="watch"><b class="lbl">Things that make it worse</b> Longer sequences, bigger batch, switching SGD → Adam (two extra states per parameter).</div>
+
+<h3>fp16 vs bf16</h3>
+<ul>
+<li><b>fp16:</b> more precision (mantissa bits), small exponent range → can overflow/underflow → needs <b>loss scaling</b>.</li>
+<li><b>bf16:</b> same exponent range as fp32, less precision → much more stable, usually no loss scaling.</li>
+</ul>
+
+<h3>Splitting work across GPUs</h3>
+<table>
+<tr><th>Strategy</th><th>Idea</th><th>Use when</th></tr>
+<tr><td>Data parallel (DDP)</td><td>Full model copy per GPU; split the <i>batch</i>; sync gradients</td><td>Model fits on one GPU; you want throughput. The baseline.</td></tr>
+<tr><td>FSDP / ZeRO</td><td><b>Shard</b> parameters, gradients and optimiser state across GPUs</td><td>Model state doesn't fit on one GPU</td></tr>
+<tr><td>Tensor parallel</td><td>Split a single big matrix multiply across GPUs</td><td>Within a node, fast links (NVLink)</td></tr>
+<tr><td>Pipeline parallel</td><td>Different layer groups on different GPUs; microbatches flow like an assembly line</td><td>Very deep models. Idle gaps ("bubbles") reduce utilisation</td></tr>
+</table>
+<div class="watch"><b class="lbl">DDP job hangs at end of epoch 1, no error</b> One rank didn't reach the collective sync point (uneven batch counts, an exception, a conditional branch). Eventually an NCCL timeout. Check rank desynchronisation first.</div>
+<div class="remember"><b class="lbl">Remember</b><ul><li>7B fp16 = 14 GB; 4-bit = 3.5 GB; training ≈ 16 B/param.</li><li>Checkpointing: memory ↓, time ↑.</li><li>bf16 is the stable one.</li><li>DDP = copy model, split data. FSDP/ZeRO = shard the state.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Training%20at%20scale%20and%20GPU%20memory">Practise this topic →</a><label><input type="checkbox" data-done="memory"> Mark as read</label></div>
+</section>
+
+<section id="llm" data-title="How LLMs work (for engineers)" data-quiz="Training at scale and GPU memory">
+<h2>5. How LLMs work (what engineers need)</h2>
+<p class="sub">Tokens, attention, prefill vs decode, the KV cache. These explain cost, latency and memory in later topics.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>An LLM turns text into tokens, predicts the next token, appends it, and repeats. Almost every cost, speed and memory question is a consequence of that loop.</div>
+
+<div class="flow">text → tokens (IDs) → embeddings → transformer layers (attention) → next-token probabilities
+      → pick one → append → repeat    (this is "autoregressive" generation)</div>
+
+<h3>Tokens</h3>
+<ul>
+<li>Text is split into <b>subword tokens</b>. Rare domain words and SKU codes fragment into many pieces, which hurts the model.</li>
+<li>Languages differ: some need many more tokens per word than English, so the <b>same content costs more and is slower</b>. Measure <b>tokens per representative word/request, by language</b>.</li>
+<li>Cost and limits are counted in tokens, not words.</li>
+</ul>
+
+<h3>Attention and context</h3>
+<ul>
+<li>Self-attention compares every token with every other token, so cost grows roughly with the <b>square of sequence length</b> (why long prompts are expensive in prefill).</li>
+<li><b>Lost in the middle:</b> models use the start and end of a long prompt better than the middle.</li>
+<li><b>Context rot / bloat:</b> hundreds of old turns and big tool outputs add noise, cost and latency. Summarise or drop old turns, compress tool outputs, retrieve only what's needed.</li>
+</ul>
+
+<h3>Prefill vs decode (two phases of inference)</h3>
+<table>
+<tr><th></th><th>Prefill</th><th>Decode</th></tr>
+<tr><td>What</td><td>Process the whole prompt <b>in parallel</b></td><td>Generate output <b>one token at a time</b></td></tr>
+<tr><td>Usually limited by</td><td>Compute</td><td>Memory bandwidth (reading weights + KV cache each step)</td></tr>
+<tr><td>Shows up as</td><td>Time to first token (TTFT)</td><td>Tokens per second</td></tr>
+</table>
+
+<h3>KV cache</h3>
+<ul>
+<li>For each past token the model stores its attention <b>Keys and Values</b> so it doesn't recompute them each step. That's the KV cache.</li>
+<li>Size ≈ <code>2 × layers × n_kv_heads × head_dim × sequence length × batch × bytes</code></li>
+<li>It grows with <b>context length × number of concurrent conversations</b>.</li>
+<li><b>Server fits the weights but crashes with many long chats?</b> Inspect KV-cache allocation and concurrency, not the weights.</li>
+<li><b>GQA (grouped-query attention)</b> shares K/V heads across groups of query heads → much smaller KV cache. (That's why the formula uses <code>n_kv_heads</code>, not the full head count or <code>d_model</code>.)</li>
+</ul>
+
+<h3>Mixture of Experts (MoE)</h3>
+<p>A model with 200B total parameters that activates 20B per token: <b>compute per token ≈ the 20B active</b>, but <b>memory must still hold all 200B</b>.</p>
+
+<h3>Quantisation</h3>
+<ul>
+<li>Store weights in fewer bits (16 → 4): less memory, and faster <b>decode</b> because fewer bytes are read from memory (real speed depends on kernels, hardware, batch size).</li>
+<li>Cost: quality can drop, especially on maths/code and small models (outlier values get clipped).</li>
+<li>Weight-only quantisation shrinks weights; weight-and-activation quantisation shrinks both.</li>
+<li><b>Response when quality drops:</b> evaluate on <b>your task</b> at several precisions (latency + quality + cost); try a higher-bit or mixed-precision format. Don't ship a regression.</li>
+</ul>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Attention cost ~ length²; prefill = parallel, decode = sequential.</li><li>KV cache = weights' hidden sibling: grows with context × users.</li><li>GQA shrinks KV cache; MoE saves compute, not memory.</li><li>Quantise → measure on your task.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Training%20at%20scale%20and%20GPU%20memory">Practise this topic →</a><label><input type="checkbox" data-done="llm"> Mark as read</label></div>
+</section>
+
+<section id="adapt" data-title="Adapting LLMs: fine-tuning" data-quiz="Fine-tuning and alignment">
+<h2>6. Adapting LLMs: training stages and fine-tuning</h2>
+<p class="sub">How a raw model becomes an assistant, and when you should (not) fine-tune.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Fine-tuning changes <b>behaviour</b> (style, format, skills). It is a poor way to teach <b>facts</b> that change; use retrieval for those.</div>
+
+<h3>The three training stages</h3>
+<table>
+<tr><th>Stage</th><th>Data</th><th>Teaches</th></tr>
+<tr><td>1 Pre-training</td><td>Huge raw text, next-token prediction</td><td>Language and general knowledge. Fluent, but ignores instructions</td></tr>
+<tr><td>2 SFT (supervised fine-tuning)</td><td>Curated prompt → response pairs</td><td><b>Following instructions</b> and formats; turns a base model into an assistant</td></tr>
+<tr><td>3 Alignment</td><td>Preference pairs (chosen vs rejected) or checkable rewards</td><td>Human preferences and safety</td></tr>
+</table>
+<h4>Alignment methods</h4>
+<ul>
+<li><b>RLHF with PPO:</b> train a separate <b>reward model</b>, then optimise against it. Complex and can be unstable.</li>
+<li><b>DPO:</b> learns directly from chosen/rejected pairs, <b>no separate reward model</b>. Simpler, more stable → popular.</li>
+<li><b>RLVR (RL with verifiable rewards):</b> reward only when a deterministic checker passes (maths answer matches, unit tests pass).</li>
+<li><b>Distillation:</b> a small model learns from a stronger teacher's outputs.</li>
+</ul>
+
+<h3>LoRA and QLoRA</h3>
+<ul>
+<li><b>LoRA:</b> freeze the big base model; train tiny <b>low-rank adapter</b> matrices. Cheap, small files. (Hyperparameters: rank and alpha control adapter capacity and scaling.) Library: Hugging Face <b>PEFT</b>.</li>
+<li><b>QLoRA:</b> same, but the frozen base is stored in <b>4-bit</b>, so a huge model fits on far smaller hardware. Be realistic, though: a 70B model on one 48 GB GPU needs a careful memory estimate, not a hope.</li>
+</ul>
+
+<h3>Risks of fine-tuning</h3>
+<ul>
+<li><b>Catastrophic forgetting:</b> narrow data overwrites general ability. <i>Mitigate:</i> LoRA, low learning rate, mix general instruction data into your domain data, test on broad regression sets.</li>
+<li><b>Overfitting</b> on a small narrow dataset.</li>
+<li><b>Data quality beats quantity:</b> 800 curated, diverse, deduplicated examples can beat 20,000 noisy duplicated ones.</li>
+<li><b>Never stops talking?</b> The end-of-sequence (EOS) token was missing or masked in the training format, so the model never learned to stop.</li>
+</ul>
+
+<h3>Fine-tune vs RAG vs prompt (decision)</h3>
+<table>
+<tr><th>Need</th><th>Use</th></tr>
+<tr><td>Quick improvement, clearer instructions</td><td>Prompt / context engineering first</td></tr>
+<tr><td>Private, <b>changing</b> facts; must <b>cite</b> sources; update without retraining</td><td>RAG</td></tr>
+<tr><td>Consistent style/format, specialised stable skill, sometimes cheaper small model</td><td>Fine-tuning</td></tr>
+<tr><td>Facts that change weekly + citations</td><td>Not fine-tuning. Fine-tuning bakes static knowledge into weights</td></tr>
+</table>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Pretrain → SFT → alignment (DPO = no reward model).</li><li>LoRA = small adapters; QLoRA = adapters on a 4-bit base.</li><li>Fine-tune behaviour, retrieve facts.</li><li>Forgetting: low LR, LoRA, mix in general data.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Fine-tuning%20and%20alignment">Practise this topic →</a><label><input type="checkbox" data-done="adapt"> Mark as read</label></div>
+</section>
+
+<section id="rag" data-title="RAG and retrieval" data-quiz="RAG and retrieval">
+<h2>7. RAG: retrieval-augmented generation</h2>
+<p class="sub">Example B: the policy assistant. This is the most common LLM architecture, and most "wrong answer" bugs live here.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Don't make the model memorise your documents. <b>Find</b> the relevant passages at question time and hand them to the model to answer from.</div>
+
+<div class="flow">INGEST (offline):  parse PDF → chunk → embed → store in vector index (+ metadata)
+QUERY  (live):     question → filter/rewrite → retrieve top-k → rerank → build prompt → generate → verify/cite</div>
+
+<h3>Ingestion</h3>
+<ul>
+<li><b>Parsing:</b> multi-column PDFs, tables, diagrams need <b>layout-aware parsing</b> (plus a vision/image path for visuals). Naive text extraction scrambles reading order.</li>
+<li><b>Chunking:</b> fixed-size character splits cut sentences and tables in half and strip context. Use structure/semantic-aware chunking.</li>
+<li><b>Freshness:</b> track document versions/hashes, re-embed changed content, <b>delete</b> removed chunks. Otherwise old answers keep appearing.</li>
+<li><b>Ingestion lag:</b> bot says "I don't know" about a file uploaded 5 seconds ago? Ingestion is asynchronous; it's not indexed yet.</li>
+</ul>
+
+<h3>Retrieval</h3>
+<table>
+<tr><th>Method</th><th>Good at</th><th>Weak at</th></tr>
+<tr><td>Dense (embeddings)</td><td>Meaning, paraphrases</td><td>Exact codes, SKUs, acronyms, rare names</td></tr>
+<tr><td>Sparse (BM25 keyword)</td><td>Exact terms</td><td>Synonyms / paraphrase</td></tr>
+<tr><td><b>Hybrid</b> (both)</td><td>Both; usually beats pure vector</td><td></td></tr>
+</table>
+<ul>
+<li><b>Same embedding model</b> for documents and queries. Different models live in incompatible vector spaces, so similarity is meaningless.</li>
+<li><b>Metadata filters</b> (country, team, permissions) must be applied <b>server-side before retrieval</b>. A prompt is not an access-control boundary.</li>
+<li><b>Reranker (cross-encoder):</b> stage 1 retrieves many candidates cheaply; stage 2 scores each against the query jointly, slower but far more accurate, and puts the best on top.</li>
+</ul>
+
+<h3>Generation and trust</h3>
+<ul>
+<li>Instruct the model to answer <b>only from evidence</b>; require citations.</li>
+<li>Question outside the knowledge base → say the evidence is insufficient or ask a clarifying question (abstain), don't guess.</li>
+<li>Even a relevant cited document can be misquoted: verify <b>dates, figures and identifiers</b> against the source.</li>
+<li>Long contexts: relevant passage in the middle gets ignored (lost in the middle). Rerank, trim, reorder.</li>
+</ul>
+
+<h3>Measuring RAG: the RAG triad (RAGAS-style)</h3>
+<ul>
+<li><b>Context relevance:</b> did retrieval bring back relevant material?</li>
+<li><b>Groundedness / faithfulness:</b> is the answer supported by that material?</li>
+<li><b>Answer relevance:</b> does it actually answer the question?</li>
+<li><b>recall@k:</b> is the correct evidence anywhere in the top k results? If not, retrieval failed.</li>
+</ul>
+
+<h3>Debugging table (always: retrieval first, then generation)</h3>
+<table>
+<tr><th>Symptom</th><th>Likely stage</th><th>Fix</th></tr>
+<tr><td>Works with hand-fed context, fails end-to-end</td><td>Retrieval</td><td>Chunking, embedding match, filters, top-k</td></tr>
+<tr><td>Right paragraph not in top-k</td><td>Retrieval (recall@k)</td><td>Better chunks, hybrid search, reranking, query rewriting</td></tr>
+<tr><td>Right passages, wrong order</td><td>Ranking</td><td>Reranker</td></tr>
+<tr><td>Exact SKU / part number missed</td><td>Dense-only retrieval</td><td>Hybrid (add BM25)</td></tr>
+<tr><td>Claims not in the sources</td><td>Generation</td><td>Grounding instructions, citations, groundedness check, abstain</td></tr>
+<tr><td>Old policy still quoted</td><td>Ingestion</td><td>Versioning, re-embed, delete stale chunks</td></tr>
+<tr><td>Brand-new doc unknown</td><td>Ingestion lag</td><td>Wait for async index / show indexing status</td></tr>
+</table>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Retrieval failures can't be fixed by prompts or bigger models.</li><li>Hybrid for exact terms; rerank for order; same embedding model; filters server-side.</li><li>Abstain when evidence is missing.</li><li>Triad: context relevance, groundedness, answer relevance.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=RAG%20and%20retrieval">Practise this topic →</a><label><input type="checkbox" data-done="rag"> Mark as read</label></div>
+</section>
+
+<section id="api" data-title="LLM APIs: prompts, structure, cost" data-quiz="LLM APIs, prompts and cost">
+<h2>8. Building with LLM APIs: prompts, structure, cost</h2>
+<p class="sub">Making an LLM feature reliable, fast and affordable.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Treat the model like an unreliable, billed-per-token external service: validate what comes back, protect yourself from outages, and do the cost maths.</div>
+
+<h3>API or self-host?</h3>
+<ul>
+<li><b>Start API-first</b> to find product fit and build evals. Consider self-hosting when sustained volume, data residency or customisation justify it.</li>
+<li>Honest cost comparison includes <b>idle GPU time, redundancy, operations and engineering time</b>, not just the GPU's hourly price.</li>
+<li><b>Provider changes its model version</b> → run regression evals on your golden set, track versions, roll out cautiously. Pin versions where possible.</li>
+</ul>
+
+<h3>Structured output (JSON)</h3>
+<ul>
+<li>Use <b>schema-constrained output</b> where available (function calling, JSON mode, Pydantic) <b>and validate</b> before use.</li>
+<li><b>Valid schema ≠ correct or authorised.</b> A perfectly formed JSON containing another tenant's user ID is still a security bug. Check meaning and permissions too.</li>
+<li><b>Schema failure:</b> bounded repair. Re-prompt with the exact validation error 2–3 times, then fail safely. Never retry forever.</li>
+</ul>
+
+<h3>Cost</h3>
+<ul>
+<li>Cost = <code>tokens ÷ 1,000,000 × price per 1M tokens</code>. Example: 2,000 input tokens × 500,000 requests = 1B tokens = 1,000M × $3 = <b>$3,000/month</b>.</li>
+<li><b>Prompt caching:</b> put the stable parts (system prompt, tool schemas, shared context) <b>first</b> so the provider can reuse them cheaply; variable user text goes last.</li>
+<li><b>Model routing:</b> send easy tasks to the smallest model that <b>passes your evals</b>; reserve the big model for hard cases.</li>
+<li>Jobs that can wait hours (nightly classification) → batch/async APIs, which are cheaper.</li>
+<li><b>Context management:</b> long histories cost money and reduce quality. Summarise old turns, compress tool outputs.</li>
+</ul>
+
+<h3>Reliability</h3>
+<ul>
+<li><b>Every external call needs a timeout</b> (a hung provider call must not hang your app).</li>
+<li>Rate-limit (429) errors → <b>exponential backoff with jitter</b>, queues, fallback model, graceful degradation. Circuit breakers stop hammering a failing service.</li>
+<li>10,000 requests/day → plan for limits, retries, monitoring and cost.</li>
+</ul>
+
+<h3>Latency</h3>
+<ul>
+<li><b>TTFT</b> (time to first token) drives how fast it <i>feels</i>. Streaming helps perception even when total time is the same.</li>
+<li>Slow response? <b>Break it down first:</b> retrieval, queueing, network, TTFT, generation time. Optimise the biggest piece.</li>
+</ul>
+
+<h3>Caching answers</h3>
+<table>
+<tr><th>Cache</th><th>Risk</th><th>Safeguard</th></tr>
+<tr><td>Exact cache</td><td>Stale answer; answer for the wrong user/permission scope</td><td>Include user/tenant/context in the key; expire when sources change</td></tr>
+<tr><td>Semantic cache (similar questions)</td><td>"Similar" but actually different question → wrong answer</td><td>Careful similarity threshold; scope by user/tenant; invalidate on data change</td></tr>
+</table>
+
+<h3>Trustworthy UX</h3>
+<p>When uncertain: show sources, say it's unsure, allow correction, make actions reversible. Don't project false certainty.</p>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Validate output, then check meaning and permissions.</li><li>Stable prefix first (caching); smallest passing model (routing).</li><li>Timeout + backoff with jitter on every call.</li><li>Measure TTFT and break latency into parts.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=LLM%20APIs%2C%20prompts%20and%20cost">Practise this topic →</a><label><input type="checkbox" data-done="api"> Mark as read</label></div>
+</section>
+
+<section id="agents" data-title="Agents, tools and security" data-quiz="Agents, tools and security">
+<h2>9. Agents, tools and security</h2>
+<p class="sub">When the model can <i>do</i> things, mistakes and attacks become actions.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Assume the model can be tricked. Don't rely on instructions to keep it safe; <b>limit what it can do</b> using code outside the model.</div>
+
+<h3>Workflow or agent?</h3>
+<ul>
+<li><b>Workflow:</b> steps are fixed in code (retrieve account → calculate → ask confirmation → submit). Simpler, cheaper, easier to test.</li>
+<li><b>Agent:</b> the model chooses actions dynamically. Use only when the steps genuinely can't be known in advance.</li>
+<li>Rule: use the <b>simplest pattern that meets the need</b>.</li>
+</ul>
+
+<h3>Tool design</h3>
+<ul>
+<li>Few, well-named, <b>narrowly scoped, typed</b> tools. Not one broad "run any command" tool.</li>
+<li><b>Authorisation lives in code</b> against the end user's identity (payment tool, "colleague's leave balance"). A correctly formed tool call can still be unauthorised.</li>
+<li><b>Loops:</b> max-steps budget, detect repeated identical calls, return structured error messages the model can recover from, timeouts.</li>
+<li><b>High-impact actions</b> (database writes, payments): pause, show a human-readable <b>dry-run diff</b>, get approval, then commit.</li>
+</ul>
+
+<h3>Prompt injection</h3>
+<ul>
+<li><b>What:</b> untrusted text (user input, a web page, a retrieved document saying "ignore previous instructions") tricks the model into following the attacker.</li>
+<li><b>Principle:</b> retrieved content is <b>data, not instructions</b>. Enforce permissions and tool policies outside the model.</li>
+<li>A filter or system-prompt warning alone is <b>bypassable</b>.</li>
+</ul>
+<div class="oneline"><b class="lbl">The lethal trifecta</b>An agent that has (1) access to <b>private data</b>, (2) exposure to <b>untrusted content</b> and (3) a way to <b>send data out</b> can be made to leak. Robust defence is architectural: <b>remove at least one</b> of the three.</div>
+<ul>
+<li><b>MCP servers/tools:</b> treat as untrusted code; give least-privilege credentials; review security.</li>
+<li>Defence in depth: least privilege + approval for risky actions + untrusted-data handling + monitoring.</li>
+</ul>
+
+<h3>Guardrails vs evals</h3>
+<table>
+<tr><th></th><th>Guardrail</th><th>Eval</th></tr>
+<tr><td>When</td><td>Runtime, inline, real time</td><td>Offline or asynchronous</td></tr>
+<tr><td>Job</td><td>Block PII leaks, jailbreaks, toxicity, off-topic before the user sees it</td><td>Measure how often the system behaves correctly</td></tr>
+<tr><td>Needs to be</td><td>Fast, often deterministic</td><td>Thorough</td></tr>
+</table>
+<p>A guardrail that blocks real users has a <b>false-positive problem</b>: measure its false-positive rate alongside detection (TPR/TNR). Version it and monitor it.</p>
+
+<h3>Evaluating agents</h3>
+<ol class="l"><li>Score the <b>end-to-end outcome</b> first (did the task get done?).</li><li>Then inspect the trajectory: tool choice, arguments, errors, wasted steps.</li><li>Check <b>claims vs tool results</b>. "Your leave is booked" when the tool returned an error is a failure. Verify outcomes.</li></ol>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Fixed steps → workflow, not agent.</li><li>Authorisation in code, not in the prompt.</li><li>Trifecta: remove one leg.</li><li>Approve high-impact actions with a diff.</li><li>Guardrail = runtime; eval = measurement.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Agents%2C%20tools%20and%20security">Practise this topic →</a><label><input type="checkbox" data-done="agents"> Mark as read</label></div>
+</section>
+
+<section id="evals" data-title="Evaluating LLM apps (evals)" data-quiz="Evals and LLM judges">
+<h2>10. Evaluating LLM apps (evals)</h2>
+<p class="sub">The biggest topic in the quiz. It's one workflow; learn the order and the questions get easy.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Don't start with a generic score. <b>Read real traces</b>, name the ways it fails, rank them, then build a cheap check for each and run them on every change.</div>
+
+<h3>The eval workflow (in order)</h3>
+<div class="flow">1 Collect traces (a trace = one full run: input, retrieval, tool calls, output)
+2 Sample well: random + outliers + negative feedback + long/retry-heavy + clusters of similar queries
+3 Open coding: read, write free-text notes on what went wrong
+4 Axial coding: group the notes into named FAILURE MODES
+5 Prioritise: frequency × impact   (rare but severe privacy leak outranks common typo)
+6 Build an evaluator per failure mode (code check first, LLM judge if needed)
+7 Run in CI on every change, monitor in production, repeat</div>
+<ul>
+<li>"90% helpful" on a single score tells you nothing to fix. Look at traces and failure modes.</li>
+<li>A sample of only happy-path traces misses outliers, negatives and edge cases.</li>
+<li><b>No users yet?</b> Generate synthetic inputs systematically: define <b>dimensions</b> (feature, scenario, persona) → combine them → generate natural inputs. Decide correctness separately.</li>
+<li><b>Long conversation fails at turn 8?</b> Find the first upstream failure, replay turns 1…N−1 and test turn N, shrink to the smallest reproducer, repeat runs (outputs vary).</li>
+<li><b>Benchmark-reality gap:</b> strong benchmark but unhappy users → eval doesn't reflect real workflows. Add real failures to the set (see the Hard-mode question about 82% → 90%).</li>
+<li><b>Multilingual:</b> test every supported language, dialect and mixed-language request.</li>
+</ul>
+
+<h3>Choosing the evaluator</h3>
+<table>
+<tr><th>Failure type</th><th>Evaluator</th></tr>
+<tr><td>Objectively checkable: valid JSON, required disclaimer text, exact number equals truth</td><td><b>Code assertion / schema validator</b>: cheap, deterministic, first choice</td></tr>
+<tr><td>Needs judgement: tone, empathy, "captures the main idea"</td><td><b>LLM judge</b> (one failure mode per judge, clear definition, pass/fail)</td></tr>
+<tr><td>Did the agent finish the task?</td><td>Outcome check, then trajectory</td></tr>
+<tr><td>Real user impact of a change</td><td><b>A/B test</b> on real behaviour</td></tr>
+</table>
+<p>Evaluation ladder: unit checks → human/model review → A/B tests (task completion, escalations, retention).</p>
+
+<h3>Can you trust the LLM judge?</h3>
+<ul>
+<li><b>Single-purpose judge:</b> one failure mode each. A narrow rubric is clearer and easier to validate.</li>
+<li>Validate against <b>human labels</b>:
+<ul><li><b>TPR</b> = share of real failures the judge catches</li><li><b>TNR</b> = share of real passes it correctly passes</li></ul></li>
+<li><b>Accuracy lies on imbalanced data:</b> if only 2% of cases fail and the judge says "Pass" to everything, accuracy is 98% but <b>TPR = 0%</b>.</li>
+<li><b>Agreement between two humans:</b> <b>Cohen's kappa</b> (chance-adjusted). For 3+ annotators: Fleiss' kappa or Krippendorff's alpha.</li>
+<li>Don't over-tune the judge prompt on one set. Keep a <b>held-out test set</b> to avoid overfitting.</li>
+<li><b>Judge flags more failures than experts think?</b> Validate TPR/TNR, then correct the estimate cautiously. The correction is meaningless if TPR + TNR is close to 1 (no better than chance).</li>
+</ul>
+<h4>Judge biases</h4>
+<table>
+<tr><th>Bias</th><th>Meaning</th><th>Check</th></tr>
+<tr><td>Position bias</td><td>Prefers the first (or second) answer</td><td>Swap the order; count a win only if it holds both ways</td></tr>
+<tr><td>Verbosity bias</td><td>Prefers longer answers</td><td>Control for length</td></tr>
+<tr><td>Self-preference</td><td>Rates its own model family's output highly</td><td>Use a different family; validate against humans</td></tr>
+</table>
+
+<h3>Statistics you must recognise</h3>
+<ul>
+<li><b>Small sample, no uncertainty:</b> "90% pass on 50 cases" needs a <b>confidence interval</b> (Wilson interval behaves well for small n or rates near 0/1).</li>
+<li><b>Two versions on the same cases</b> (paired pass/fail) → <b>McNemar's test</b> (uses cases that flipped).</li>
+<li><b>Run-to-run noise:</b> repeat runs; outputs vary.</li>
+<li><b>Changing prompt, model and retrieval at once?</b> You can't attribute any gain. <b>Change one thing, rerun the same eval set</b>, report per-failure-mode changes plus latency and cost.</li>
+</ul>
+
+<h3>Evals in CI and production</h3>
+<ul>
+<li><b>Golden dataset</b> (100–500 verified examples): run automatically on every prompt, retriever or model change → regression tests.</li>
+<li>A prompt change improves the average but breaks a critical failure mode? <b>CI should block</b> if that mode is designated release-blocking (data leaks, unconfirmed actions). Tone regressions may only warn.</li>
+<li><b>Saturated suite</b> (passes for months): make it harder or retire it, but <b>keep high-stakes checks</b> (data leaks, wrong pay info).</li>
+<li><b>Sampling live traffic:</b> cheap deterministic checks on <b>every</b> trace; expensive LLM judges on a sample or nightly batch (risk/stratified sampling).</li>
+<li><b>Prompt optimisers:</b> only <i>after</i> you have a reliable eval set. Otherwise they overfit a weak target.</li>
+</ul>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Traces → open coding → axial coding → failure modes → frequency × impact.</li><li>Code check first; LLM judge for judgement only.</li><li>Validate judges with TPR/TNR (not accuracy), kappa for humans, swap order.</li><li>Intervals for small n; McNemar for paired; one change at a time.</li><li>CI blocks critical regressions.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Evals%20and%20LLM%20judges">Practise this topic →</a><label><input type="checkbox" data-done="evals"> Mark as read</label></div>
+</section>
+
+<section id="serving" data-title="Serving and deployment" data-quiz="Serving and deployment">
+<h2>11. Serving and deployment</h2>
+<p class="sub">Getting a model in front of users quickly, cheaply and safely.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>Serving is a balancing act between <b>latency</b> (how long one user waits) and <b>throughput</b> (how much work the system does in total).</div>
+
+<h3>Latency vs throughput</h3>
+<ul>
+<li><b>Latency:</b> time for one request. Report <b>percentiles</b> (p50, p95, p99), not averages. Tail latency is what unhappy users feel.</li>
+<li><b>Throughput:</b> requests or tokens per second across all users.</li>
+<li>High tokens/s but users complain → look at p95/p99 latency and queueing.</li>
+<li>For LLMs also track <b>TTFT</b> (time to first token).</li>
+</ul>
+
+<h3>LLM serving techniques (vLLM-style engines)</h3>
+<table>
+<tr><th>Technique</th><th>Problem it solves</th></tr>
+<tr><td><b>Continuous batching</b></td><td>New requests wait for the whole batch to finish. Fix: insert a new request the moment any sequence finishes → GPU never idles</td></tr>
+<tr><td><b>PagedAttention</b></td><td>KV cache wastes memory when reserved as big contiguous blocks. Fix: store it in pages, so more concurrent requests fit</td></tr>
+<tr><td><b>Speculative decoding</b></td><td>Decode is slow, one token at a time. A small <b>draft</b> model proposes several tokens; the big model <b>verifies them in one pass</b>. Same output quality, faster</td></tr>
+<tr><td><b>KV caching</b></td><td>Avoids recomputing attention for past tokens (see Topic 5)</td></tr>
+<tr><td><b>Quantisation</b></td><td>Fewer bytes read per token → faster decode (measure quality)</td></tr>
+</table>
+<p>A naive Hugging Face <code>generate</code> loop is fine for experiments but not for high-concurrency production traffic.</p>
+
+<h3>Why is it slow? (measure first)</h3>
+<ul>
+<li>Break the request into: queueing, retrieval, TTFT, generation, network.</li>
+<li><b>Latency spikes every few minutes:</b> autoscaling cold starts on GPU pods, garbage collection pauses, queue bursts, connection-pool exhaustion.</li>
+<li>Profile before optimising.</li>
+</ul>
+
+<h3>Safe releases</h3>
+<table>
+<tr><th>Pattern</th><th>What users see</th><th>Purpose</th></tr>
+<tr><td><b>Shadow deployment</b></td><td>Nothing. A <b>copy</b> of live traffic goes to the new model; outputs are logged only</td><td>Compare quality/latency risk-free</td></tr>
+<tr><td><b>Canary release</b></td><td>A small share of <b>real</b> users (e.g. 1–5%) get the new model</td><td>Check live business metrics, then ramp up</td></tr>
+<tr><td>Blue-green</td><td>Switch between two full environments</td><td>Instant rollback</td></tr>
+</table>
+<p>Always: <b>version the model</b>, staged rollout, health checks, a tested rollback path. A typical order is shadow → canary → full.</p>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Percentiles, not averages.</li><li>Continuous batching = no waiting; PagedAttention = KV cache without waste; speculative decoding = draft + verify.</li><li>Shadow = invisible copy; canary = few real users.</li><li>Measure where the time goes first.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=Serving%20and%20deployment">Practise this topic →</a><label><input type="checkbox" data-done="serving"> Mark as read</label></div>
+</section>
+
+<section id="prod" data-title="Production ML and governance" data-quiz="MLOps, governance and architecture">
+<h2>12. Production ML, drift and governance</h2>
+<p class="sub">After launch: models quietly rot. This is the "keep watching it" part of the lifecycle.</p>
+<div class="oneline"><b class="lbl">The one-line idea</b>A deployed model faces a changing world. Monitor inputs, outputs and outcomes; investigate before retraining; keep records so you can explain and reproduce what happened.</div>
+
+<h3>Three different ways it goes wrong</h3>
+<table>
+<tr><th>Problem</th><th>Plain meaning</th><th>Fraud example</th></tr>
+<tr><td>Data drift / <b>covariate shift</b></td><td>Input distribution <code>P(X)</code> changes; relationship to the label is unchanged</td><td>A new payment app suddenly brings many small transactions</td></tr>
+<tr><td><b>Concept drift</b></td><td>The relationship <code>P(Y|X)</code> itself changes</td><td>Fraudsters change tactics; the same-looking transaction now means something else</td></tr>
+<tr><td><b>Training-serving skew</b></td><td>Features computed <i>differently</i> offline vs live, so the model sees inputs it never trained on</td><td>Training used a pandas job; production recomputes "avg spend" with different logic</td></tr>
+</table>
+<ul>
+<li>Skew fix: share the same feature code/definitions (a <b>feature store</b> helps) and test for parity.</li>
+<li>A feature that isn't available at prediction time (see leakage, Topic 1) fails or misleads in production.</li>
+</ul>
+
+<h3>What to monitor</h3>
+<ul>
+<li>Input distributions, prediction distributions, labels (when they arrive), quality metrics, business outcomes, data-pipeline health.</li>
+<li>Per <b>slice/segment</b>. Aggregates hide regressions.</li>
+</ul>
+<div class="watch"><b class="lbl">Sudden input shift, what first?</b> Check data quality and upstream/operational changes → assess impact → maybe fall back to a safer model/rules → then decide whether to adapt or retrain. <b>Drift is a signal to investigate, not an automatic retrain button.</b></div>
+
+<h3>Logs, audit and governance</h3>
+<ul>
+<li><b>PII in logs:</b> minimise collection, redact/mask, restrict access, set retention rules.</li>
+<li><b>Auditable AI feature:</b> record versioned model and prompt IDs, relevant inputs/outputs (with privacy controls), retrieval references, evaluation metadata. Enough to reproduce behaviour.</li>
+<li><b>High-stakes use (e.g. employment decisions):</b> document intended use, risk controls, audit logs, <b>fairness testing</b>, human review, a named accountable owner. Legal duties depend on jurisdiction.</li>
+<li><b>Reproducibility:</b> record model, adapter, tokenizer, prompt and eval results together.</li>
+<li><b>Explainability for regulated stakeholders:</b> use appropriate methods (e.g. SHAP) and document their limits.</li>
+</ul>
+
+<h3>Eval vs real life</h3>
+<p>Strong benchmarks but unhappy users → you haven't evaluated against <b>real user workflows and business outcomes</b>. Link offline scores to task success and user impact.</p>
+<div class="remember"><b class="lbl">Remember</b><ul><li>Covariate shift = inputs change; concept drift = the rule changes; skew = offline ≠ online features.</li><li>Investigate, don't auto-retrain.</li><li>Log with privacy; audit with versions.</li><li>Monitor by slice.</li></ul></div>
+<div class="foot"><a class="btn" href="index.html?topic=MLOps%2C%20governance%20and%20architecture">Practise this topic →</a><label><input type="checkbox" data-done="prod"> Mark as read</label></div>
+</section>
+
+<section id="ref" data-title="Quick reference and glossary" data-quiz="ML fundamentals and debugging">
+<h2>13. Quick reference</h2>
+<p class="sub">Use this the night before. If a line surprises you, go back to that topic.</p>
+
+<h3>Symptom → first suspect</h3>
+<table>
+<tr><th>Symptom</th><th>First suspect</th><th>Topic</th></tr>
+<tr><td>Score too good to be true</td><td>Leakage (duplicates, label in features, bad split)</td><td>1</td></tr>
+<tr><td>Great on random split, bad on future</td><td>Needs time-based split</td><td>1</td></tr>
+<tr><td>99% accuracy, misses fraud</td><td>Imbalance → precision/recall</td><td>1, 2</td></tr>
+<tr><td>High ROC-AUC, poor precision</td><td>Threshold / prevalence</td><td>2</td></tr>
+<tr><td>Train ↓ val ↑</td><td>Overfitting</td><td>3</td></tr>
+<tr><td>NaN loss / growing grad norm</td><td>Exploding gradients, log(0)</td><td>3</td></tr>
+<tr><td>Early layers frozen</td><td>Vanishing gradients</td><td>3</td></tr>
+<tr><td>GPU idle, CPU 100%</td><td>DataLoader</td><td>3</td></tr>
+<tr><td>Memory spike at validation</td><td>Missing <code>no_grad()</code></td><td>3</td></tr>
+<tr><td>CUDA OOM</td><td>Smaller batch, bf16, accumulation, checkpointing</td><td>4</td></tr>
+<tr><td>DDP freezes at epoch end</td><td>Rank desync / uneven batches</td><td>4</td></tr>
+<tr><td>Weights fit, serving crashes under load</td><td>KV cache × concurrency</td><td>5</td></tr>
+<tr><td>Fine-tuned model never stops</td><td>EOS token missing/masked</td><td>6</td></tr>
+<tr><td>Forgot general abilities after fine-tune</td><td>Catastrophic forgetting</td><td>6</td></tr>
+<tr><td>Right doc never retrieved</td><td>Chunking / hybrid / rerank (recall@k)</td><td>7</td></tr>
+<tr><td>Invented facts despite good retrieval</td><td>Grounding + abstain + verify</td><td>7</td></tr>
+<tr><td>Old answers after policy update</td><td>Re-index / delete stale chunks</td><td>7</td></tr>
+<tr><td>Valid JSON, wrong tenant ID</td><td>Semantic + authorisation checks</td><td>8</td></tr>
+<tr><td>Rate-limit errors</td><td>Backoff + jitter, queue, fallback</td><td>8</td></tr>
+<tr><td>Agent loops forever</td><td>Step budget, duplicate detection</td><td>9</td></tr>
+<tr><td>Agent can read private data + untrusted content + send out</td><td>Remove one leg of the trifecta</td><td>9</td></tr>
+<tr><td>Score up, users unhappy</td><td>Eval set ≠ production traffic</td><td>10</td></tr>
+<tr><td>Judge "98% accurate" but flags nothing</td><td>TPR = 0 on imbalanced data</td><td>10</td></tr>
+<tr><td>High throughput, slow users</td><td>p95/p99 latency, queueing</td><td>11</td></tr>
+<tr><td>Quality drops over months</td><td>Drift → monitor, investigate</td><td>12</td></tr>
+</table>
+
+<h3>Numbers and formulas</h3>
+<ul>
+<li>Weights memory = params × bytes. 7B fp16 = 14 GB; 4-bit = 3.5 GB.</li>
+<li>Training ≈ 16 bytes/param (2+2+4+4+4) before activations.</li>
+<li>Token cost = tokens ÷ 1M × price.</li>
+<li>Precision = TP/(TP+FP); Recall/TPR = TP/(TP+FN); TNR = TN/(TN+FP).</li>
+<li>KV cache ≈ 2 × layers × n_kv_heads × head_dim × seq × batch × bytes.</li>
+<li>Failure priority = frequency × impact.</li>
+</ul>
+
+<h3>Glossary</h3>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Activation</td><td>Intermediate layer outputs kept for backprop; the main memory cost that scales with batch and sequence</td></tr>
+<tr><td>Adapter (LoRA)</td><td>Small trainable matrices added to a frozen model</td></tr>
+<tr><td>Alignment</td><td>Steering a model toward human preferences/safety (RLHF, DPO, RLVR)</td></tr>
+<tr><td>BM25</td><td>Classic keyword-ranking algorithm; "sparse" retrieval</td></tr>
+<tr><td>Calibration</td><td>Whether predicted confidence matches real accuracy</td></tr>
+<tr><td>Canary</td><td>Release to a small fraction of real users first</td></tr>
+<tr><td>Chunk</td><td>A piece of a document stored and retrieved in RAG</td></tr>
+<tr><td>Context window</td><td>Max tokens a model can read at once</td></tr>
+<tr><td>Cross-encoder</td><td>Model that scores a query and passage together; used for reranking</td></tr>
+<tr><td>Decode / Prefill</td><td>Token-by-token generation / parallel prompt processing</td></tr>
+<tr><td>Embedding</td><td>A vector representing meaning of text</td></tr>
+<tr><td>EOS token</td><td>"End of sequence"; tells the model to stop</td></tr>
+<tr><td>Failure mode</td><td>A named, recurring way the system goes wrong</td></tr>
+<tr><td>Golden dataset</td><td>Curated, verified cases run in CI to catch regressions</td></tr>
+<tr><td>Grounding / faithfulness</td><td>Answer is supported by the provided sources</td></tr>
+<tr><td>Guardrail</td><td>Runtime input/output check</td></tr>
+<tr><td>Hybrid search</td><td>Dense + keyword retrieval combined</td></tr>
+<tr><td>KV cache</td><td>Stored attention keys/values for past tokens</td></tr>
+<tr><td>Leakage</td><td>Evaluation-time information influencing training</td></tr>
+<tr><td>LLM judge</td><td>An LLM used to grade outputs</td></tr>
+<tr><td>MCP</td><td>Protocol for exposing tools/resources to agents</td></tr>
+<tr><td>MoE</td><td>Model with many experts; few active per token</td></tr>
+<tr><td>Open / axial coding</td><td>Write free-text notes / group notes into categories</td></tr>
+<tr><td>Prompt injection</td><td>Untrusted text that hijacks the model's instructions</td></tr>
+<tr><td>Quantisation</td><td>Storing numbers in fewer bits</td></tr>
+<tr><td>RAG</td><td>Retrieve relevant text, then generate from it</td></tr>
+<tr><td>Reranker</td><td>Second-stage re-ordering of retrieved candidates</td></tr>
+<tr><td>SFT</td><td>Supervised fine-tuning on instruction/response pairs</td></tr>
+<tr><td>Shadow deployment</td><td>New model gets a copy of traffic; no user impact</td></tr>
+<tr><td>Skew (training-serving)</td><td>Features differ between training and production</td></tr>
+<tr><td>Stratify</td><td>Keep class proportions across splits</td></tr>
+<tr><td>TTFT</td><td>Time to first token</td></tr>
+<tr><td>Trace</td><td>Complete record of one run through the system</td></tr>
+</table>
+<div class="foot"><a class="btn primary" href="index.html">Test yourself with the quiz →</a><label><input type="checkbox" data-done="ref"> Mark as read</label></div>
+</section>
+
+</main>
+</div>
+<script>
+const root=document.documentElement,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function theme(t){root.dataset.theme=t;$('#theme').textContent=t==='dark'?'☀ Light':'☾ Dark'}
+theme(store('ai-practice-theme')==='light'?'light':'dark');
+$('#theme').onclick=()=>{let t=root.dataset.theme==='dark'?'light':'dark';theme(t);store('ai-practice-theme',t)};
+$('#menu').onclick=()=>$('#nav').classList.toggle('open');
+let done={};try{done=JSON.parse(store('ai-notes-done')||'{}')}catch(e){}
+const secs=$$('main > section');
+$('#toc').innerHTML=secs.map((s,i)=>`<li data-id="${s.id}" class="${done[s.id]?'done':''}"><a href="#${s.id}"><span class="n">${i===0?'★':i}</span><span class="t">${s.dataset.title}</span></a></li>`).join('');
+$$('#toc a').forEach(a=>a.onclick=()=>$('#nav').classList.remove('open'));
+$$('[data-done]').forEach(c=>{c.checked=!!done[c.dataset.done];c.onchange=()=>{done[c.dataset.done]=c.checked;store('ai-notes-done',JSON.stringify(done));$(`#toc li[data-id="${c.dataset.done}"]`).classList.toggle('done',c.checked)}});
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}})},{rootMargin:'-20% 0px -70% 0px'});
+secs.forEach(s=>io.observe(s));
+$('#q').oninput=e=>{const v=e.target.value.trim().toLowerCase();secs.forEach(s=>{const hit=!v||s.textContent.toLowerCase().includes(v);s.classList.toggle('hide',!hit);$(`#toc li[data-id="${s.id}"]`).style.display=hit?'':'none'})};
+</script>
+</body>
+</html>

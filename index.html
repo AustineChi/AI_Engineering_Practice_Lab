@@ -26,7 +26,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;margin:17px 0}
 </style>
 </head>
 <body><main>
-<div class="top"><div><div class="brand">AI Engineering · Practice Lab</div></div><div class="top-actions"><button class="theme-toggle" id="themeToggle">☀ Light mode</button><div class="stats" id="score">Ready to learn</div></div></div>
+<div class="top"><div><div class="brand">AI Engineering · Practice Lab</div></div><div class="top-actions"><a class="theme-toggle" href="notes.html" style="text-decoration:none">📖 Study notes</a><button class="theme-toggle" id="themeToggle">☀ Light mode</button><div class="stats" id="score">Ready to learn</div></div></div>
 <h1>Build engineering instincts.</h1><p class="sub">Recall-first questions · learn, practise, review and track your progress.</p>
 <section class="card" id="app"><p class="muted">Loading question bank…</p></section>
 <footer>Progress and bookmarks are saved in this browser. Works offline when launched locally with the included script.</footer>
@@ -43,6 +43,8 @@ progress=readStore(STORE,{});bookmarks=readStore(BOOK,[]);
 function applyTheme(t){root.dataset.theme=t;let b=document.getElementById('themeToggle');if(b)b.textContent=t==='dark'?'☀ Light mode':'☾ Dark mode';}
 applyTheme((()=>{try{return localStorage.getItem('ai-practice-theme')==='light'?'light':'dark'}catch(e){return'dark'}})());
 document.getElementById('themeToggle').onclick=()=>{let t=root.dataset.theme==='dark'?'light':'dark';applyTheme(t);try{localStorage.setItem('ai-practice-theme',t)}catch(e){}};
+const NOTE={'ML fundamentals and debugging':'data','Training at scale and GPU memory':'memory','Fine-tuning and alignment':'adapt','RAG and retrieval':'rag','Evals and LLM judges':'evals','LLM APIs, prompts and cost':'api','MLOps, governance and architecture':'prod','Agents, tools and security':'agents','Serving and deployment':'serving'};
+function noteLink(q){let a=NOTE[q.section];return a?`<div class="takeaway">📖 <a href="notes.html#${a}" target="_blank" rel="noopener">Read the study note for this topic</a></div>`:'';}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function topics(){return [...new Set(bank.map(q=>q.section))].sort((a,b)=>a.localeCompare(b));}
 function stats(){let vals=Object.values(progress),attempts=vals.reduce((n,x)=>n+(x.attempts||0),0),correct=vals.reduce((n,x)=>n+(x.correctCount||0),0),mastered=vals.filter(x=>x.attempts>=2&&x.correctCount/x.attempts>=.8).length,wrong=vals.filter(x=>x.lastCorrect===false).length;return{attempts,correct,mastered,wrong,accuracy:attempts?Math.round(correct/attempts*100):0};}
@@ -55,7 +57,8 @@ function dashboard(){
  <div class="field"><label for="topic">Topic</label><select id="topic"><option value="all">All topics (${bank.length} questions)</option>${topics().map(t=>`<option value="${esc(t)}">${esc(t)} (${bank.filter(q=>q.section===t).length})</option>`).join('')}</select></div>
  <div class="toolbar"><button class="primary" id="startAll">Start practice →</button><button class="secondary" id="reviewDue">Due for review (${dueList().length})</button><button class="secondary" id="reviewWrong">Review mistakes (${s.wrong})</button><button class="secondary" id="reviewBookmarks">Bookmarks (${bookmarks.length})</button><button class="secondary" id="dashboardBtn">Refresh dashboard</button></div>
  <div class="divider"></div><h3 class="section-title">Topic progress</h3>${byTopic.map(x=>`<div class="topicrow"><span>${esc(x.t)} <span class="muted">· ${x.done}/${x.total} attempted</span></span><strong>${x.acc}%</strong></div>`).join('')}
- <div class="toolbar"><button class="danger" id="reset">Reset all progress and start from scratch</button></div><p class="small">Reset clears saved answers, confidence ratings and bookmarks. Your light/dark theme preference is kept.</p>`;
+ <div class="toolbar"><button class="danger" id="reset">Reset all progress and start from scratch</button></div><p class="small">New to a topic? Read the <a href="notes.html">study notes</a> first, then use the quiz as your exam.</p><p class="small">Reset clears saved answers, confidence ratings and bookmarks. Your light/dark theme preference is kept.</p>`;
+ {let tp=new URLSearchParams(location.search).get('topic'),sel=document.getElementById('topic');if(tp&&[...sel.options].some(o=>o.value===tp))sel.value=tp;}
  document.getElementById('startAll').onclick=()=>{mode=document.getElementById('mode').value;let t=document.getElementById('topic').value;startRound(bank.filter(q=>t==='all'||q.section===t),'all');};
  document.getElementById('reviewDue').onclick=()=>{let a=dueList();if(a.length)startRound(a,'mistakes');else alert('Nothing due. Answer some questions first; missed ones return after 1, 3, 7 and 14 days as you get them right.');};
  document.getElementById('reviewWrong').onclick=()=>{let a=bank.filter(q=>progress[q.id]?.lastCorrect===false);if(a.length)startRound(a,'mistakes');else alert('No mistakes to review yet. Complete a few questions first.');};
@@ -133,7 +136,7 @@ function grade(result,picked){
  let fb=document.getElementById('feedback');fb.classList.add('show');
  let calib=result==='wrong'&&c==='High'?' You were highly confident and wrong: this is the kind of gap to review.':'';
  if(mode==='learn'){
-  fb.innerHTML=`<div class="verdict ${correct?'good':'bad'}">${tag} · ${pts>=0?'+':''}${pts} pts (${c} confidence).${calib}</div><div class="explain"><strong>Answer:</strong> ${esc(ansText(q))}</div><div class="explain" style="margin-top:8px"><strong>Why:</strong> ${esc(q.explanation)}</div>${q.concept?`<div class="takeaway"><strong>📘 Key concept — ${esc(q.concept_term)}:</strong> ${esc(q.concept)}</div>`:''}${q.practical?`<div class="takeaway"><strong>Put it into practice:</strong> ${esc(q.practical)}</div>`:''}`;
+  fb.innerHTML=`<div class="verdict ${correct?'good':'bad'}">${tag} · ${pts>=0?'+':''}${pts} pts (${c} confidence).${calib}</div><div class="explain"><strong>Answer:</strong> ${esc(ansText(q))}</div><div class="explain" style="margin-top:8px"><strong>Why:</strong> ${esc(q.explanation)}</div>${q.concept?`<div class="takeaway"><strong>📘 Key concept — ${esc(q.concept_term)}:</strong> ${esc(q.concept)}</div>`:''}${q.practical?`<div class="takeaway"><strong>Put it into practice:</strong> ${esc(q.practical)}</div>`:''}${noteLink(q)}`;
  }else fb.innerHTML='<p class="small" style="margin:0">Answer recorded. Explanations will appear when the round ends.</p>';
  document.getElementById('next').disabled=false;scoreEl.textContent=`Round ${score} / ${position+1} · ${points} pts`;
 }
