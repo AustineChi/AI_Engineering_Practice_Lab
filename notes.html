@@ -286,7 +286,7 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 <tr><td>fp32 master weights</td><td>4</td></tr><tr><td>Adam momentum (m)</td><td>4</td></tr><tr><td>Adam variance (v)</td><td>4</td></tr>
 <tr><td><b>Total</b></td><td><b>≈ 16 bytes/param</b> (before activations)</td></tr>
 </table>
-<ul><li>1B params ≈ 16 GB; 7B ≈ 112 GB for training state alone. That's why big models need sharding (below).</li><li>Activations (intermediate results kept for backprop) grow with batch size and sequence length.</li></ul>
+<ul><li>1B params ≈ 16 GB; 7B ≈ 112 GB for training state alone. That's why big models need sharding (below).</li><li><i>Nuance:</i> 16 B/param is an estimate for <b>one setup</b> (full training, mixed-precision Adam), not a constant. Optimiser choice, sharding, precision, frozen parameters (e.g. LoRA trains very few) and activations all change the real number.</li><li>Activations (intermediate results kept for backprop) grow with batch size and sequence length.</li></ul>
 
 <h3>OOM toolbox ("CUDA out of memory")</h3>
 <table>
@@ -335,7 +335,7 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 
 <h3>Attention and context</h3>
 <ul>
-<li>Self-attention compares every token with every other token, so cost grows roughly with the <b>square of sequence length</b> (why long prompts are expensive in prefill).</li>
+<li>Standard (full) self-attention compares every token with every other token, so cost grows roughly with the <b>square of sequence length</b> (why long prompts are expensive in prefill). <i>Nuance:</i> sliding-window, sparse and linear-attention variants exist to reduce this for long contexts.</li>
 <li><b>Lost in the middle:</b> models use the start and end of a long prompt better than the middle.</li>
 <li><b>Context rot / bloat:</b> hundreds of old turns and big tool outputs add noise, cost and latency. Summarise or drop old turns, compress tool outputs, retrieve only what's needed.</li>
 </ul>
@@ -362,7 +362,7 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 
 <h3>Quantisation</h3>
 <ul>
-<li>Store weights in fewer bits (16 → 4): less memory, and faster <b>decode</b> because fewer bytes are read from memory (real speed depends on kernels, hardware, batch size).</li>
+<li>Store weights in fewer bits (16 → 4): less memory, and often faster <b>decode</b> because fewer bytes are read from memory. <b>Speed is not guaranteed:</b> it depends on hardware support, the quantisation format, kernels and batch size.</li>
 <li>Cost: quality can drop, especially on maths/code and small models (outlier values get clipped).</li>
 <li>Weight-only quantisation shrinks weights; weight-and-activation quantisation shrinks both.</li>
 <li><b>Response when quality drops:</b> evaluate on <b>your task</b> at several precisions (latency + quality + cost); try a higher-bit or mixed-precision format. Don't ship a regression.</li>
@@ -374,7 +374,7 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 <section id="adapt" data-title="Adapting LLMs: fine-tuning" data-quiz="Fine-tuning and alignment">
 <h2>6. Adapting LLMs: training stages and fine-tuning</h2>
 <p class="sub">How a raw model becomes an assistant, and when you should (not) fine-tune.</p>
-<div class="oneline"><b class="lbl">The one-line idea</b>Fine-tuning changes <b>behaviour</b> (style, format, skills). It is a poor way to teach <b>facts</b> that change; use retrieval for those.</div>
+<div class="oneline"><b class="lbl">The one-line idea</b>Fine-tuning mainly changes <b>behaviour</b> (style, format, skills). It is a poor way to keep <b>changing facts</b> current; use retrieval for those. This is a rule of thumb: the two often work <b>together</b>.</div>
 
 <h3>The three training stages</h3>
 <table>
@@ -385,8 +385,9 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 </table>
 <h4>Alignment methods</h4>
 <ul>
-<li><b>RLHF with PPO:</b> train a separate <b>reward model</b>, then optimise against it. Complex and can be unstable.</li>
-<li><b>DPO:</b> learns directly from chosen/rejected pairs, <b>no separate reward model</b>. Simpler, more stable → popular.</li>
+<li><b>RLHF with PPO:</b> train a separate <b>reward model</b>, then optimise against it. More moving parts, and sensitive to tuning.</li>
+<li><b>DPO:</b> learns directly from chosen/rejected pairs, <b>no separate reward model</b>. Simpler to set up, which is why it is popular.</li>
+<li class="nuance"><i>Nuance:</i> simpler does not mean better. Results depend on the preference data, hyperparameters and setup. One study (Xu et al., 2024) found a well-tuned PPO beat DPO on several benchmarks. The exam fact is only that DPO needs <b>no separate reward model</b>.</li>
 <li><b>RLVR (RL with verifiable rewards):</b> reward only when a deterministic checker passes (maths answer matches, unit tests pass).</li>
 <li><b>Distillation:</b> a small model learns from a stronger teacher's outputs.</li>
 </ul>
@@ -412,7 +413,9 @@ optimizer.zero_grad()         # clear gradients (PyTorch ACCUMULATES by default)
 <tr><td>Private, <b>changing</b> facts; must <b>cite</b> sources; update without retraining</td><td>RAG</td></tr>
 <tr><td>Consistent style/format, specialised stable skill, sometimes cheaper small model</td><td>Fine-tuning</td></tr>
 <tr><td>Facts that change weekly + citations</td><td>Not fine-tuning. Fine-tuning bakes static knowledge into weights</td></tr>
+<tr><td>Both: specialised domain <b>and</b> fresh facts</td><td>Combine them: fine-tune for domain language, format and task skill; RAG for current, citable facts</td></tr>
 </table>
+<p><i>Nuance:</i> fine-tuning can also improve domain adaptation and task capability, not just style. Choose by evidence from your evals, not by slogan.</p>
 <div class="remember"><b class="lbl">Remember</b><ul><li>Pretrain → SFT → alignment (DPO = no reward model).</li><li>LoRA = small adapters; QLoRA = adapters on a 4-bit base.</li><li>Fine-tune behaviour, retrieve facts.</li><li>Forgetting: low LR, LoRA, mix in general data.</li></ul></div>
 <div class="foot"><a class="btn" href="index.html?topic=Fine-tuning%20and%20alignment">Practise this topic →</a><label><input type="checkbox" data-done="adapt"> Mark as read</label></div>
 </section>
@@ -668,7 +671,7 @@ QUERY  (live):     question → filter/rewrite → retrieve top-k → rerank →
 <tr><td><b>PagedAttention</b></td><td>KV cache wastes memory when reserved as big contiguous blocks. Fix: store it in pages, so more concurrent requests fit</td></tr>
 <tr><td><b>Speculative decoding</b></td><td>Decode is slow, one token at a time. A small <b>draft</b> model proposes several tokens; the big model <b>verifies them in one pass</b>. Same output quality, faster</td></tr>
 <tr><td><b>KV caching</b></td><td>Avoids recomputing attention for past tokens (see Topic 5)</td></tr>
-<tr><td><b>Quantisation</b></td><td>Fewer bytes read per token → faster decode (measure quality)</td></tr>
+<tr><td><b>Quantisation</b></td><td>Fewer bytes read per token → often faster decode, but only if hardware/kernels support the format. Always measure both speed and quality</td></tr>
 </table>
 <p>A naive Hugging Face <code>generate</code> loop is fine for experiments but not for high-concurrency production traffic.</p>
 
@@ -730,8 +733,36 @@ QUERY  (live):     question → filter/rewrite → retrieve top-k → rerank →
 <div class="foot"><a class="btn" href="index.html?topic=MLOps%2C%20governance%20and%20architecture">Practise this topic →</a><label><input type="checkbox" data-done="prod"> Mark as read</label></div>
 </section>
 
+<section id="beyond" data-title="Beyond these notes" data-quiz="ML fundamentals and debugging">
+<h2>13. Beyond these notes</h2>
+<p class="sub">Honest scope: these notes explain the ideas behind the quiz. They are a foundation, not a full curriculum. Reading cannot make you job-ready; building projects does.</p>
+<div class="oneline"><b class="lbl">What this covers</b>The mental models and debugging habits for ML, LLM apps, RAG, agents, evals, serving and production, i.e. what the quiz tests.</div>
+<h3>Not covered (learn next)</h3>
+<table>
+<tr><th>Area</th><th>What to study</th></tr>
+<tr><td>Data engineering</td><td>Ingestion (APIs, databases, streams), ETL/ELT, schema validation, data versioning and lineage, feature stores, data quality monitoring</td></tr>
+<tr><td>Deep learning internals</td><td>Backpropagation, CNNs/RNNs, full transformer (multi-head attention, positional encodings such as RoPE, normalisation, residuals), encoder/decoder variants, long-context architectures</td></tr>
+<tr><td>Multimodal AI</td><td>Vision-language models, speech-to-text and text-to-speech, audio and video understanding, multimodal embeddings and retrieval</td></tr>
+<tr><td>Advanced retrieval</td><td>Query decomposition, multi-hop retrieval, HyDE, parent-child and contextual retrieval, GraphRAG, vector-index tuning, RAG vs long context. <b>Benchmark alternatives on your own data</b>; none is always best</td></tr>
+<tr><td>Advanced agents</td><td>Orchestration and state machines, planning, memory, durable execution and recovery, idempotency, observability. And when <b>not</b> to use multi-agent designs: more agents is not more intelligence</td></tr>
+<tr><td>Infrastructure</td><td>Docker, Kubernetes, a cloud provider, CI/CD, queues, OpenTelemetry/Prometheus/Grafana, FastAPI/REST/gRPC</td></tr>
+<tr><td>AI product engineering</td><td>Requirements, UX for AI, human escalation, product metrics and SLOs, cost per successful task, feedback loops</td></tr>
+</table>
+<h3>How to turn notes into skill</h3>
+<ol class="l">
+<li>Build a classifier with a time-based split and a proper metric (Topics 1–2).</li>
+<li>Train a small PyTorch model; deliberately break it (no <code>zero_grad</code>, LR too high) and read the curves (Topic 3).</li>
+<li>Build a RAG app over your own PDFs; measure recall@k, add hybrid search and a reranker (Topic 7).</li>
+<li>Give an agent one narrow tool with real authorisation checks (Topic 9).</li>
+<li>Do error analysis on 50 real traces and write your first code assertions and one validated judge (Topic 10).</li>
+<li>Deploy one of these in a container with logging and a rollback plan (Topics 11–12).</li>
+</ol>
+<p>Keep each project in its own GitHub repository: working code and a short write-up of what failed and how you fixed it is the strongest proof of skill.</p>
+<div class="foot"><label><input type="checkbox" data-done="beyond"> Mark as read</label></div>
+</section>
+
 <section id="ref" data-title="Quick reference and glossary" data-quiz="ML fundamentals and debugging">
-<h2>13. Quick reference</h2>
+<h2>14. Quick reference</h2>
 <p class="sub">Use this the night before. If a line surprises you, go back to that topic.</p>
 
 <h3>Symptom → first suspect</h3>
